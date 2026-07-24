@@ -311,10 +311,6 @@
         }
         _0x4d28d6 = _0x4d28d6.replace("htt/", window.location.origin);
 
-        if (_0x4d28d6 && _0x4d28d6.indexOf(".astc") > -1) {
-            console.log("==========astcastcastc=======111111111111==astcastcastc=====================");
-            _0x4d28d6 = _0x4d28d6.replace(/\.astc(\?|$)/, ".webp$1");
-        }
         return _0x4d28d6;
     };
     var _0x3e5b57 = new Proxy(WebSocket, {
