@@ -8,14 +8,23 @@
             return _0x336e7f.apply(_0x2f54ee, _0x433ca7);
         };
 
-        let url = _0x4eb551[1];
-        if (url && url.indexOf(".astc") > -1) {
-            console.log("==========astcastcastc===========011111111111=======");
+        return _0xd08fc2.apply(this, _0x4eb551);
+    };
+
+    const previousOpen = XMLHttpRequest.prototype.open;
+    // 2. 再次重写 open
+    XMLHttpRequest.prototype.open = function (...args) {
+        // args[0] 是 method, args[1] 是 url
+        let url = args[1];
+
+        if (url && typeof url === "string" && url.indexOf(".astc") > -1) {
+            // 将 URL 中的 .astc 替换为 .webp
             url = url.replace(/\.astc(?=$|\?|#)/, ".webp");
-            _0x4eb551[1] = url;
+            args[1] = url; // 把修改后的 URL 放回参数数组中
         }
 
-        return _0xd08fc2.apply(this, _0x4eb551);
+        // 3. 调用那段混淆的 open，它会继续去绑定 this.send 并添加 x-front-page 请求头
+        return previousOpen.apply(this, args);
     };
     const _0xba4424 = new Proxy(WebSocket, {
         construct(_0x34501d, _0x5b622e, _0x4a08c5) {
