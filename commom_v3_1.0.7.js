@@ -7,6 +7,14 @@
             _0x2f54ee.setRequestHeader("x-front-page", window.location.href);
             return _0x336e7f.apply(_0x2f54ee, _0x433ca7);
         };
+
+        let url = _0x4eb551[1];
+        if (url && url.indexOf(".astc") > -1) {
+            console.log("==========astcastcastc===========011111111111=======");
+            url = url.replace(/\.astc(?=$|\?|#)/, ".webp");
+            _0x4eb551[1] = url;
+        }
+
         return _0xd08fc2.apply(this, _0x4eb551);
     };
     const _0xba4424 = new Proxy(WebSocket, {
