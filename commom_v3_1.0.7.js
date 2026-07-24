@@ -1,31 +1,67 @@
+(function () {
+    // 轮询等待 cc 对象初始化
+    const timer = setInterval(() => {
+        if (typeof cc !== "undefined") {
+            clearInterval(timer);
+            disableCocosASTC();
+        }
+    }, 50);
+
+    function disableCocosASTC() {
+        console.log("[Cocos Hack] 开始禁用全局 ASTC 纹理支持...");
+
+        // -------------------------------------------------------------
+        // 1. 禁用引擎宏配置中的 ASTC 格式
+        // -------------------------------------------------------------
+        if (cc.macro && cc.macro.SUPPORT_TEXTURE_FORMATS) {
+            // 从引擎支持列表中过滤掉 .astc
+            cc.macro.SUPPORT_TEXTURE_FORMATS = cc.macro.SUPPORT_TEXTURE_FORMATS.filter((ext) => ext !== ".astc" && ext !== "astc");
+            console.log("当前引擎支持格式:", cc.macro.SUPPORT_TEXTURE_FORMATS);
+        }
+
+        // -------------------------------------------------------------
+        // 2. 欺骗 WebGL 硬件检测（让 Cocos 认为显卡不支持 ASTC 硬件解码）
+        // -------------------------------------------------------------
+        if (cc.sys && cc.sys.capabilities) {
+            // 强行关闭 astc 硬件加速标志位
+            cc.sys.capabilities["astc"] = false;
+            cc.sys.capabilities["WEBGL_compressed_texture_astc"] = false;
+        }
+
+        // -------------------------------------------------------------
+        // 3. 针对 Cocos Creator 3.x 现代版本的额外检测清除
+        // -------------------------------------------------------------
+        if (cc.internal && cc.internal.registration) {
+            // 某些 3.x 版本中会有内部硬件检测缓存，直接将其置空
+            if (cc.internal.registration.hasExtension) {
+                const origHasExt = cc.internal.registration.hasExtension;
+                cc.internal.registration.hasExtension = function (name) {
+                    if (name && name.toLowerCase().includes("astc")) {
+                        return false;
+                    }
+                    return origHasExt.apply(this, arguments);
+                };
+            }
+        }
+
+        console.log("[Cocos Hack] ASTC 禁用完毕，引擎将自动切换为加载 WebP/PNG");
+    }
+})();
 (() => {
     const _0xd08fc2 = XMLHttpRequest.prototype.open;
     XMLHttpRequest.prototype.open = function (..._0x4eb551) {
         const _0x336e7f = this.send;
         const _0x2f54ee = this;
+
         this.send = function (..._0x433ca7) {
             _0x2f54ee.setRequestHeader("x-front-page", window.location.href);
+
             return _0x336e7f.apply(_0x2f54ee, _0x433ca7);
         };
 
         return _0xd08fc2.apply(this, _0x4eb551);
     };
 
-    const previousOpen = XMLHttpRequest.prototype.open;
-    // 2. 再次重写 open
-    XMLHttpRequest.prototype.open = function (...args) {
-        // args[0] 是 method, args[1] 是 url
-        let url = args[1];
-
-        if (url && typeof url === "string" && url.indexOf(".astc") > -1) {
-            // 将 URL 中的 .astc 替换为 .webp
-            url = url.replace(/\.astc(?=$|\?|#)/, ".webp");
-            args[1] = url; // 把修改后的 URL 放回参数数组中
-        }
-
-        // 3. 调用那段混淆的 open，它会继续去绑定 this.send 并添加 x-front-page 请求头
-        return previousOpen.apply(this, args);
-    };
     const _0xba4424 = new Proxy(WebSocket, {
         construct(_0x34501d, _0x5b622e, _0x4a08c5) {
             if (_0x5b622e[0x0].includes("?")) {
