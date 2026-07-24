@@ -310,6 +310,11 @@
             _0x4d28d6 = _0x4d28d6 + ("?gameId=" + _0x276df2("gameId"));
         }
         _0x4d28d6 = _0x4d28d6.replace("htt/", window.location.origin);
+
+        if (_0x4d28d6 && _0x4d28d6.indexOf(".astc") > -1) {
+            console.log("==========astcastcastc=======111111111111==astcastcastc=====================");
+            _0x4d28d6 = _0x4d28d6.replace(/\.astc(\?|$)/, ".webp$1");
+        }
         return _0x4d28d6;
     };
     var _0x3e5b57 = new Proxy(WebSocket, {
@@ -484,9 +489,9 @@
     const _0x3c78dc = _0x5f45fd.searchParams.get("ssoKey").includes("open");
     const _0x167179 = (_0x1eddbb) => {
         if (_0x1536f8 && _0x3c78dc) {
-            _0x1eddbb = _0x1eddbb.replaceAll(/\/\/[^/]*/g, "//intro-" + window.location.hostname);
+            _0x1eddbb = _0x1eddbb.replaceAll(/\/\/[^/]*/g, "//" + window.location.hostname + `:8002`);
         } else {
-            _0x1eddbb = _0x1eddbb.replaceAll(/\/\/[^/]*/g, "//intro_" + window.location.hostname);
+            _0x1eddbb = _0x1eddbb.replaceAll(/\/\/[^/]*/g, "//" + window.location.hostname + `:8002`);
         }
         return _0x1eddbb;
     };
@@ -499,6 +504,7 @@
                 _0x1ab1f1 = _0x167179(_0x1ab1f1);
                 _0x1ab1f1 = _0x1ab1f1 + "&xfrontpage=" + encodeURIComponent(window.location.href);
             }
+            // _0x1ab1f1 = _0x1ab1f1.replace("/intro?", "/intro.html?");
             var _0x19fc81 = _0x9d3c4a.set.apply(this, arguments);
             this.setAttribute("data-original-src", _0x1ab1f1);
             _0x9d3c4a.set.call(this, _0x1ab1f1);
