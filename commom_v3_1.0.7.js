@@ -537,11 +537,34 @@
     const _0x1536f8 = _0x5f45fd.searchParams.has("ssoKey");
     const _0x3c78dc = _0x5f45fd.searchParams.get("ssoKey").includes("open");
     const _0x167179 = (_0x1eddbb) => {
-        if (_0x1536f8 && _0x3c78dc) {
-            _0x1eddbb = _0x1eddbb.replaceAll(/\/\/[^/]*/g, "//" + window.location.hostname + `:8002`);
-        } else {
-            _0x1eddbb = _0x1eddbb.replaceAll(/\/\/[^/]*/g, "//" + window.location.hostname + `:8002`);
+        switch (window.location.protocol) {
+            case "http:": {
+                if (window.location.hostname == "localhost") {
+                    if (_0x1536f8 && _0x3c78dc) {
+                        _0x1eddbb = _0x1eddbb.replaceAll(/\/\/[^/]*/g, "//" + window.location.hostname + `:8002`);
+                    } else {
+                        _0x1eddbb = _0x1eddbb.replaceAll(/\/\/[^/]*/g, "//" + window.location.hostname + `:8002`);
+                    }
+                } else {
+                    if (_0x1536f8 && _0x3c78dc) {
+                        _0x1eddbb = _0x1eddbb.replaceAll(/\/\/[^/]*/g, "//" + window.location.hostname + `:8022`);
+                    } else {
+                        _0x1eddbb = _0x1eddbb.replaceAll(/\/\/[^/]*/g, "//" + window.location.hostname + `:8022`);
+                    }
+                }
+
+                break;
+            }
+            case "https:": {
+                if (_0x1536f8 && _0x3c78dc) {
+                    _0x1eddbb = _0x1eddbb.replaceAll(/\/\/[^/]*/g, "//intro-" + window.location.hostname);
+                } else {
+                    _0x1eddbb = _0x1eddbb.replaceAll(/\/\/[^/]*/g, "//intro-" + window.location.hostname);
+                }
+                break;
+            }
         }
+
         return _0x1eddbb;
     };
     Object.defineProperty(HTMLIFrameElement.prototype, "src", {
