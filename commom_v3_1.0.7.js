@@ -15,6 +15,7 @@ if (location.protocol === "http:") {
     // 4. 将 script 标签插入到页面中，触发下载
     document.head.appendChild(script);
 
+    /////-----11111
     // (function () {
     //     // 轮询等待 cc 对象初始化
     //     const timer = setInterval(() => {
@@ -65,95 +66,96 @@ if (location.protocol === "http:") {
     //     }
     // })();
     ////////////
-    (function () {
-        // 轮询等待 cc 对象初始化
-        const timer = setInterval(() => {
-            if (typeof cc !== "undefined") {
-                clearInterval(timer);
-                initCocosHack();
-            }
-        }, 50);
+    /////-----222222
+    // (function () {
+    //     // 轮询等待 cc 对象初始化
+    //     const timer = setInterval(() => {
+    //         if (typeof cc !== "undefined") {
+    //             clearInterval(timer);
+    //             initCocosHack();
+    //         }
+    //     }, 50);
 
-        function initCocosHack() {
-            console.log("[Cocos Hack] 开始初始化优化逻辑...");
+    //     function initCocosHack() {
+    //         console.log("[Cocos Hack] 开始初始化优化逻辑...");
 
-            // -------------------------------------------------------------
-            // 1. 禁用 ASTC 逻辑 (保留您原本的功能)
-            // -------------------------------------------------------------
-            if (cc.macro && cc.macro.SUPPORT_TEXTURE_FORMATS) {
-                cc.macro.SUPPORT_TEXTURE_FORMATS = cc.macro.SUPPORT_TEXTURE_FORMATS.filter((ext) => ext !== ".astc" && ext !== "astc");
-            }
-            if (cc.sys && cc.sys.capabilities) {
-                cc.sys.capabilities["astc"] = false;
-                cc.sys.capabilities["WEBGL_compressed_texture_astc"] = false;
-            }
-            if (cc.internal && cc.internal.registration && cc.internal.registration.hasExtension) {
-                const origHasExt = cc.internal.registration.hasExtension;
-                cc.internal.registration.hasExtension = function (name) {
-                    if (name && name.toLowerCase().includes("astc")) return false;
-                    return origHasExt.apply(this, arguments);
-                };
-            }
+    //         // -------------------------------------------------------------
+    //         // 1. 禁用 ASTC 逻辑 (保留您原本的功能)
+    //         // -------------------------------------------------------------
+    //         if (cc.macro && cc.macro.SUPPORT_TEXTURE_FORMATS) {
+    //             cc.macro.SUPPORT_TEXTURE_FORMATS = cc.macro.SUPPORT_TEXTURE_FORMATS.filter((ext) => ext !== ".astc" && ext !== "astc");
+    //         }
+    //         if (cc.sys && cc.sys.capabilities) {
+    //             cc.sys.capabilities["astc"] = false;
+    //             cc.sys.capabilities["WEBGL_compressed_texture_astc"] = false;
+    //         }
+    //         if (cc.internal && cc.internal.registration && cc.internal.registration.hasExtension) {
+    //             const origHasExt = cc.internal.registration.hasExtension;
+    //             cc.internal.registration.hasExtension = function (name) {
+    //                 if (name && name.toLowerCase().includes("astc")) return false;
+    //                 return origHasExt.apply(this, arguments);
+    //             };
+    //         }
 
-            // -------------------------------------------------------------
-            // 2. 新增功能：PNG 加载失败后，自动重试 WebP
-            // -------------------------------------------------------------
-            if (cc.assetManager && cc.assetManager.downloader) {
-                const downloader = cc.assetManager.downloader;
+    //         // -------------------------------------------------------------
+    //         // 2. 新增功能：PNG 加载失败后，自动重试 WebP
+    //         // -------------------------------------------------------------
+    //         if (cc.assetManager && cc.assetManager.downloader) {
+    //             const downloader = cc.assetManager.downloader;
 
-                // 获取引擎原本处理 png 的下载器函数
-                // 现代 Cocos 内部通常将 png/jpg/jpeg 统一注册在 '.png' 或 'image' 处理函数中
-                const origDownloadPng = downloader._downloaders[".png"] || downloader._downloaders["image"];
+    //             // 获取引擎原本处理 png 的下载器函数
+    //             // 现代 Cocos 内部通常将 png/jpg/jpeg 统一注册在 '.png' 或 'image' 处理函数中
+    //             const origDownloadPng = downloader._downloaders[".png"] || downloader._downloaders["image"];
 
-                if (origDownloadPng) {
-                    // 重写 png 下载器
-                    downloader.register(".png", function (uuid, options, onComplete) {
-                        // 调用原本的下载逻辑
-                        origDownloadPng(uuid, options, function (err, data) {
-                            // 如果加载成功，或者当前环境压根不支持 WebP，直接返回原结果
-                            if (!err || (cc.sys && !cc.sys.capabilities["webp"])) {
-                                return onComplete(err, data);
-                            }
+    //             if (origDownloadPng) {
+    //                 // 重写 png 下载器
+    //                 downloader.register(".png", function (uuid, options, onComplete) {
+    //                     // 调用原本的下载逻辑
+    //                     origDownloadPng(uuid, options, function (err, data) {
+    //                         // 如果加载成功，或者当前环境压根不支持 WebP，直接返回原结果
+    //                         if (!err || (cc.sys && !cc.sys.capabilities["webp"])) {
+    //                             return onComplete(err, data);
+    //                         }
 
-                            // 发现 err，说明 PNG 加载失败，开始介入重试 WebP
-                            console.warn(`[Cocos Hack] PNG 加载失败: ${uuid}，正在尝试重试 WebP...`);
+    //                         // 发现 err，说明 PNG 加载失败，开始介入重试 WebP
+    //                         console.warn(`[Cocos Hack] PNG 加载失败: ${uuid}，正在尝试重试 WebP...`);
 
-                            // 1. 备份并修改 options 中的 url 后缀（兼容 2.4.x 和 3.x）
-                            const origUrl = options.url || uuid;
-                            if (typeof origUrl === "string" && origUrl.toLowerCase().endsWith(".png")) {
-                                // 将请求地址的 .png 替换为 .webp
-                                options.url = origUrl.replace(/\.png$/i, ".webp");
+    //                         // 1. 备份并修改 options 中的 url 后缀（兼容 2.4.x 和 3.x）
+    //                         const origUrl = options.url || uuid;
+    //                         if (typeof origUrl === "string" && origUrl.toLowerCase().endsWith(".png")) {
+    //                             // 将请求地址的 .png 替换为 .webp
+    //                             options.url = origUrl.replace(/\.png$/i, ".webp");
 
-                                // 2. 临时将下载器切换为 webp 模式重新发起请求
-                                const downloadWebp = downloader._downloaders[".webp"] || origDownloadPng;
+    //                             // 2. 临时将下载器切换为 webp 模式重新发起请求
+    //                             const downloadWebp = downloader._downloaders[".webp"] || origDownloadPng;
 
-                                downloadWebp(uuid, options, function (webpErr, webpData) {
-                                    if (!webpErr) {
-                                        console.log(`[Cocos Hack] WebP 重试成功: ${options.url}`);
-                                        return onComplete(null, webpData); // 成功返回 WebP 数据
-                                    }
+    //                             downloadWebp(uuid, options, function (webpErr, webpData) {
+    //                                 if (!webpErr) {
+    //                                     console.log(`[Cocos Hack] WebP 重试成功: ${options.url}`);
+    //                                     return onComplete(null, webpData); // 成功返回 WebP 数据
+    //                                 }
 
-                                    // 如果 WebP 也失败了，恢复原样，抛出最原始的 PNG 错误
-                                    console.error(`[Cocos Hack] WebP 重试也失败: ${options.url}`);
-                                    options.url = origUrl; // 还原 url 避免污染后续逻辑
-                                    return onComplete(err, null);
-                                });
-                            } else {
-                                // 如果拿不到字符串 url，直接返回原错误
-                                return onComplete(err, data);
-                            }
-                        });
-                    });
+    //                                 // 如果 WebP 也失败了，恢复原样，抛出最原始的 PNG 错误
+    //                                 console.error(`[Cocos Hack] WebP 重试也失败: ${options.url}`);
+    //                                 options.url = origUrl; // 还原 url 避免污染后续逻辑
+    //                                 return onComplete(err, null);
+    //                             });
+    //                         } else {
+    //                             // 如果拿不到字符串 url，直接返回原错误
+    //                             return onComplete(err, data);
+    //                         }
+    //                     });
+    //                 });
 
-                    console.log("[Cocos Hack] 已成功注入 PNG -> WebP 失败重试机制");
-                }
-            } else if (cc.loader) {
-                console.warn("[Cocos Hack] 当前引擎版本过老 (低于 2.4)，暂不支持此重试机制");
-            }
+    //                 console.log("[Cocos Hack] 已成功注入 PNG -> WebP 失败重试机制");
+    //             }
+    //         } else if (cc.loader) {
+    //             console.warn("[Cocos Hack] 当前引擎版本过老 (低于 2.4)，暂不支持此重试机制");
+    //         }
 
-            console.log("[Cocos Hack] 所有配置修改完毕");
-        }
-    })();
+    //         console.log("[Cocos Hack] 所有配置修改完毕");
+    //     }
+    // })();
 }
 (() => {
     const _0xd08fc2 = XMLHttpRequest.prototype.open;
