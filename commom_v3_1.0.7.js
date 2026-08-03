@@ -1,68 +1,160 @@
-// 1. 动态创建 script 标签
-const script = document.createElement("script");
-// 2. 设置 vConsole 的 CDN 地址
-script.src = "https://unpkg.com/vconsole@latest/dist/vconsole.min.js";
-// 3. 监听脚本加载完成事件，完成后再进行初始化
-script.onload = function () {
-    // 建议加上判断，避免在正式线上环境对普通用户显示
-    if (location.protocol === "http:") {
-        // 脚本加载完后，window 上才会有 VConsole 对象
-        window.vConsole = new window.VConsole();
-        console.log("vConsole 初始化成功！");
-    }
-};
-// 4. 将 script 标签插入到页面中，触发下载
-document.head.appendChild(script);
-
-(function () {
-    // 轮询等待 cc 对象初始化
-    const timer = setInterval(() => {
-        if (typeof cc !== "undefined") {
-            clearInterval(timer);
-            disableCocosASTC();
+if (location.protocol === "http:") {
+    // 1. 动态创建 script 标签
+    const script = document.createElement("script");
+    // 2. 设置 vConsole 的 CDN 地址
+    script.src = "https://unpkg.com/vconsole@latest/dist/vconsole.min.js";
+    // 3. 监听脚本加载完成事件，完成后再进行初始化
+    script.onload = function () {
+        // 建议加上判断，避免在正式线上环境对普通用户显示
+        if (location.protocol === "http:") {
+            // 脚本加载完后，window 上才会有 VConsole 对象
+            window.vConsole = new window.VConsole();
+            console.log("vConsole 初始化成功！");
         }
-    }, 50);
+    };
+    // 4. 将 script 标签插入到页面中，触发下载
+    document.head.appendChild(script);
 
-    function disableCocosASTC() {
-        console.log("[Cocos Hack] 开始禁用全局 ASTC 纹理支持...");
+    // (function () {
+    //     // 轮询等待 cc 对象初始化
+    //     const timer = setInterval(() => {
+    //         if (typeof cc !== "undefined") {
+    //             clearInterval(timer);
+    //             disableCocosASTC();
+    //         }
+    //     }, 50);
 
-        // -------------------------------------------------------------
-        // 1. 禁用引擎宏配置中的 ASTC 格式
-        // -------------------------------------------------------------
-        if (cc.macro && cc.macro.SUPPORT_TEXTURE_FORMATS) {
-            // 从引擎支持列表中过滤掉 .astc
-            cc.macro.SUPPORT_TEXTURE_FORMATS = cc.macro.SUPPORT_TEXTURE_FORMATS.filter((ext) => ext !== ".astc" && ext !== "astc");
-            console.log("当前引擎支持格式:", cc.macro.SUPPORT_TEXTURE_FORMATS);
-        }
+    //     function disableCocosASTC() {
+    //         console.log("[Cocos Hack] 开始禁用全局 ASTC 纹理支持...");
 
-        // -------------------------------------------------------------
-        // 2. 欺骗 WebGL 硬件检测（让 Cocos 认为显卡不支持 ASTC 硬件解码）
-        // -------------------------------------------------------------
-        if (cc.sys && cc.sys.capabilities) {
-            // 强行关闭 astc 硬件加速标志位
-            cc.sys.capabilities["astc"] = false;
-            cc.sys.capabilities["WEBGL_compressed_texture_astc"] = false;
-        }
+    //         // -------------------------------------------------------------
+    //         // 1. 禁用引擎宏配置中的 ASTC 格式
+    //         // -------------------------------------------------------------
+    //         if (cc.macro && cc.macro.SUPPORT_TEXTURE_FORMATS) {
+    //             // 从引擎支持列表中过滤掉 .astc
+    //             cc.macro.SUPPORT_TEXTURE_FORMATS = cc.macro.SUPPORT_TEXTURE_FORMATS.filter((ext) => ext !== ".astc" && ext !== "astc");
+    //             console.log("当前引擎支持格式:", cc.macro.SUPPORT_TEXTURE_FORMATS);
+    //         }
 
-        // -------------------------------------------------------------
-        // 3. 针对 Cocos Creator 3.x 现代版本的额外检测清除
-        // -------------------------------------------------------------
-        if (cc.internal && cc.internal.registration) {
-            // 某些 3.x 版本中会有内部硬件检测缓存，直接将其置空
-            if (cc.internal.registration.hasExtension) {
+    //         // -------------------------------------------------------------
+    //         // 2. 欺骗 WebGL 硬件检测（让 Cocos 认为显卡不支持 ASTC 硬件解码）
+    //         // -------------------------------------------------------------
+    //         if (cc.sys && cc.sys.capabilities) {
+    //             // 强行关闭 astc 硬件加速标志位
+    //             cc.sys.capabilities["astc"] = false;
+    //             cc.sys.capabilities["WEBGL_compressed_texture_astc"] = false;
+    //         }
+
+    //         // -------------------------------------------------------------
+    //         // 3. 针对 Cocos Creator 3.x 现代版本的额外检测清除
+    //         // -------------------------------------------------------------
+    //         if (cc.internal && cc.internal.registration) {
+    //             // 某些 3.x 版本中会有内部硬件检测缓存，直接将其置空
+    //             if (cc.internal.registration.hasExtension) {
+    //                 const origHasExt = cc.internal.registration.hasExtension;
+    //                 cc.internal.registration.hasExtension = function (name) {
+    //                     if (name && name.toLowerCase().includes("astc")) {
+    //                         return false;
+    //                     }
+    //                     return origHasExt.apply(this, arguments);
+    //                 };
+    //             }
+    //         }
+
+    //         console.log("[Cocos Hack] ASTC 禁用完毕，引擎将自动切换为加载 WebP/PNG");
+    //     }
+    // })();
+    ////////////
+    (function () {
+        // 轮询等待 cc 对象初始化
+        const timer = setInterval(() => {
+            if (typeof cc !== "undefined") {
+                clearInterval(timer);
+                initCocosHack();
+            }
+        }, 50);
+
+        function initCocosHack() {
+            console.log("[Cocos Hack] 开始初始化优化逻辑...");
+
+            // -------------------------------------------------------------
+            // 1. 禁用 ASTC 逻辑 (保留您原本的功能)
+            // -------------------------------------------------------------
+            if (cc.macro && cc.macro.SUPPORT_TEXTURE_FORMATS) {
+                cc.macro.SUPPORT_TEXTURE_FORMATS = cc.macro.SUPPORT_TEXTURE_FORMATS.filter((ext) => ext !== ".astc" && ext !== "astc");
+            }
+            if (cc.sys && cc.sys.capabilities) {
+                cc.sys.capabilities["astc"] = false;
+                cc.sys.capabilities["WEBGL_compressed_texture_astc"] = false;
+            }
+            if (cc.internal && cc.internal.registration && cc.internal.registration.hasExtension) {
                 const origHasExt = cc.internal.registration.hasExtension;
                 cc.internal.registration.hasExtension = function (name) {
-                    if (name && name.toLowerCase().includes("astc")) {
-                        return false;
-                    }
+                    if (name && name.toLowerCase().includes("astc")) return false;
                     return origHasExt.apply(this, arguments);
                 };
             }
-        }
 
-        console.log("[Cocos Hack] ASTC 禁用完毕，引擎将自动切换为加载 WebP/PNG");
-    }
-})();
+            // -------------------------------------------------------------
+            // 2. 新增功能：PNG 加载失败后，自动重试 WebP
+            // -------------------------------------------------------------
+            if (cc.assetManager && cc.assetManager.downloader) {
+                const downloader = cc.assetManager.downloader;
+
+                // 获取引擎原本处理 png 的下载器函数
+                // 现代 Cocos 内部通常将 png/jpg/jpeg 统一注册在 '.png' 或 'image' 处理函数中
+                const origDownloadPng = downloader._downloaders[".png"] || downloader._downloaders["image"];
+
+                if (origDownloadPng) {
+                    // 重写 png 下载器
+                    downloader.register(".png", function (uuid, options, onComplete) {
+                        // 调用原本的下载逻辑
+                        origDownloadPng(uuid, options, function (err, data) {
+                            // 如果加载成功，或者当前环境压根不支持 WebP，直接返回原结果
+                            if (!err || (cc.sys && !cc.sys.capabilities["webp"])) {
+                                return onComplete(err, data);
+                            }
+
+                            // 发现 err，说明 PNG 加载失败，开始介入重试 WebP
+                            console.warn(`[Cocos Hack] PNG 加载失败: ${uuid}，正在尝试重试 WebP...`);
+
+                            // 1. 备份并修改 options 中的 url 后缀（兼容 2.4.x 和 3.x）
+                            const origUrl = options.url || uuid;
+                            if (typeof origUrl === "string" && origUrl.toLowerCase().endsWith(".png")) {
+                                // 将请求地址的 .png 替换为 .webp
+                                options.url = origUrl.replace(/\.png$/i, ".webp");
+
+                                // 2. 临时将下载器切换为 webp 模式重新发起请求
+                                const downloadWebp = downloader._downloaders[".webp"] || origDownloadPng;
+
+                                downloadWebp(uuid, options, function (webpErr, webpData) {
+                                    if (!webpErr) {
+                                        console.log(`[Cocos Hack] WebP 重试成功: ${options.url}`);
+                                        return onComplete(null, webpData); // 成功返回 WebP 数据
+                                    }
+
+                                    // 如果 WebP 也失败了，恢复原样，抛出最原始的 PNG 错误
+                                    console.error(`[Cocos Hack] WebP 重试也失败: ${options.url}`);
+                                    options.url = origUrl; // 还原 url 避免污染后续逻辑
+                                    return onComplete(err, null);
+                                });
+                            } else {
+                                // 如果拿不到字符串 url，直接返回原错误
+                                return onComplete(err, data);
+                            }
+                        });
+                    });
+
+                    console.log("[Cocos Hack] 已成功注入 PNG -> WebP 失败重试机制");
+                }
+            } else if (cc.loader) {
+                console.warn("[Cocos Hack] 当前引擎版本过老 (低于 2.4)，暂不支持此重试机制");
+            }
+
+            console.log("[Cocos Hack] 所有配置修改完毕");
+        }
+    })();
+}
 (() => {
     const _0xd08fc2 = XMLHttpRequest.prototype.open;
     XMLHttpRequest.prototype.open = function (..._0x4eb551) {
@@ -680,956 +772,967 @@ document.head.appendChild(script);
 })();
 localStorage.clear();
 
-/////////////////////
-///拦截外层msg结构
-(function () {
-    // 捕获所有 Wasm 传给 JS 的文本数据（绝大多数解密后的 JSON 或 Token 都会走这里）
-    const originalTextDecoder = window.TextDecoder && window.TextDecoder.prototype.decode;
-    if (originalTextDecoder) {
-        window.TextDecoder.prototype.decode = function (...args) {
-            const result = originalTextDecoder.apply(this, args);
+if (location.protocol === "http:") {
+    /////////////////////
+    ///拦截外层msg结构
+    (function () {
+        // 捕获所有 Wasm 传给 JS 的文本数据（绝大多数解密后的 JSON 或 Token 都会走这里）
+        const originalTextDecoder = window.TextDecoder && window.TextDecoder.prototype.decode;
+        if (originalTextDecoder) {
+            window.TextDecoder.prototype.decode = function (...args) {
+                const result = originalTextDecoder.apply(this, args);
 
-            if (result.length > 0) {
-                if (result.indexOf("error_msg") != -1) {
-                    // let jsonRes = JSON.parse(result);
-                    console.log(`==TextDecoder=jsonRes==:\r\n ${result}`);
+                if (result.length > 0) {
+                    if (result.indexOf("error_msg") != -1) {
+                        // let jsonRes = JSON.parse(result);
+                        console.log(`==TextDecoder=jsonRes==:\r\n ${result}`);
+                    }
                 }
-            }
 
-            return result;
-        };
-    }
+                return result;
+            };
+        }
 
-    console.log("【高阶监控已就绪】请正常在网页上点击操作，等待解密明文现身...");
-})();
+        console.log("【高阶监控已就绪】请正常在网页上点击操作，等待解密明文现身...");
+    })();
 
-///拦截内层data解析
-(function () {
-    let originalDecode = null;
+    ///拦截内层data解析
+    (function () {
+        let originalDecode = null;
 
-    // 1. 动态寻找并劫持 Object 原型链上的 decode 函数
-    Object.defineProperty(Object.prototype, "decode", {
-        set: function (fn) {
-            // 如果传入的是一个函数，且还没被我们劫持过
-            if (typeof fn === "function" && !fn.__isHooked__) {
-                const typeName = this.name || this.displayName || "UnknownProto";
+        // 1. 动态寻找并劫持 Object 原型链上的 decode 函数
+        Object.defineProperty(Object.prototype, "decode", {
+            set: function (fn) {
+                // 如果传入的是一个函数，且还没被我们劫持过
+                if (typeof fn === "function" && !fn.__isHooked__) {
+                    const typeName = this.name || this.displayName || "UnknownProto";
 
-                // 重写真正的 decode 逻辑
-                const hookedFn = function (reader, length) {
-                    // 执行原本的官方原生反序列化逻辑，拿到结果对象
-                    const result = fn.apply(this, arguments);
+                    // 重写真正的 decode 逻辑
+                    const hookedFn = function (reader, length) {
+                        // 执行原本的官方原生反序列化逻辑，拿到结果对象
+                        const result = fn.apply(this, arguments);
 
-                    try {
-                        // 2. 核心打印逻辑
-                        console.log(`%c[Protobuf 拦截成功] ➔ 结构名: ${typeName}`, "color: #00ff00; font-weight: bold; font-size: 12px;");
+                        try {
+                            // 2. 核心打印逻辑
+                            console.log(`%c[Protobuf 拦截成功] ➔ 结构名: ${typeName}`, "color: #00ff00; font-weight: bold; font-size: 12px;");
 
-                        // 尝试转为纯净的 JSON 树结构打印，防止混淆的原生对象带有复杂原型
-                        if (result && typeof result.toJSON === "function") {
-                            // console.log("明文 JSON 数据:", result.toJSON());
-                            console.log("明文 JSON 数据:", result.toJSON());
-                        } else {
-                            console.log("明文明细对象:", JSON.parse(JSON.stringify(result)));
-                        }
-                    } catch (e) {
-                        // 容错处理：防止个别内部系统包转 JSON 失败导致游戏卡死
-                        console.log("明文对象(解析异常):", result);
-                    }
-
-                    return result;
-                };
-
-                // 标记该函数已被劫持，防止死循环
-                fn.__isHooked__ = true;
-                this._decode = hookedFn;
-            } else {
-                this._decode = fn;
-            }
-        },
-        get: function () {
-            return this._decode;
-        },
-        configurable: true,
-    });
-
-    console.log("%c=====================================================", "color: #00ffff;");
-    console.log("%c🚀 [全自动通信破译网已布下] 接下来所有的 decode 接口都会在下方自动打印明文！", "color: #00ffff; font-weight: bold;");
-    console.log("%c=====================================================", "color: #00ffff;");
-})();
-/////动态寻找并劫持 Object 原型链上的 encode 函数 并打印参数
-// 在 Google Protobuf（或者大名鼎鼎的 protobufjs 库）的运行机制中，
-// 所有的客户端明文请求数据在变成网络二进制乱码（Uint8Array）之前，百分之百必须通过 encode 函数进行序列化。
-// 通过 Object.defineProperty 动态劫持 Object.prototype.encode，
-// 可以在它接触到核心加密算法前的 1毫秒 拦截并捕获到最纯净、最赤裸的客户端发包请求明文对象。
-// 以下是为您量身定制的纯动态寻找并劫持 Object.prototype.encode 的一体化高阶脚本，它能自动捕获并打印加密前的核心参数：javascript
-(function () {
-    // 1. 安全锁：防止在复杂的混淆环境或频繁刷新时重复注入导致死循环
-    if (window.__Protobuf_Encode_Hooked__) {
-        console.log("⚠️ 拦截防线已在运行中，请勿重复注入。");
-        return;
-    }
-    window.__Protobuf_Encode_Hooked__ = true;
-
-    // 2. 动态劫持核心：锁定 JavaScript 底层的 Object 原型链
-    Object.defineProperty(Object.prototype, "encode", {
-        set: function (originalEncodeFunc) {
-            // 安全过滤：只有当对方赋予的是一个函数，且该函数还没被我们污染过时才进行重写
-            if (typeof originalEncodeFunc === "function" && !originalEncodeFunc.__isEncodeHooked__) {
-                // 动态获取调用该函数的 Protobuf 结构体名称（例如：Request, SpinRequest, GameInfo等）
-                // 混淆严重时可能会返回 AnonymousClass 或特定代号，但结构体本身的形态可以通过参数还原
-                const protoMessageName = this.name || this.displayName || (this.constructor ? this.constructor.name : "UnknownProto");
-
-                // ➔ 重写并构建我们自己的代理函数
-                const hookedEncodeFunc = function (...args) {
-                    try {
-                        console.log(`%c[🔒 Protobuf 动态拦截成功] ➔ 结构体/类名: ${protoMessageName}`, "color: #00ffff; font-weight: bold; font-size: 13px;");
-
-                        // 【核心目标】：在序列化加密前，提取并打印第一个参数明文
-                        // 根据 Protobuf 官方规范：第一个参数 (args[0]) 是待加密的纯明文 JS 对象 (Message)
-                        // 第二个参数 (args[1]) 是可选的二进制写入流 (Writer)
-                        const rawMessage = args[0];
-
-                        if (rawMessage !== undefined && rawMessage !== null) {
-                            // 检查结构体本身是否自带官方的 toJSON 反序列化方案
-                            if (typeof rawMessage.toJSON === "function") {
-                                console.log("【加密前明文 JSON】:", rawMessage.toJSON());
+                            // 尝试转为纯净的 JSON 树结构打印，防止混淆的原生对象带有复杂原型
+                            if (result && typeof result.toJSON === "function") {
+                                // console.log("明文 JSON 数据:", result.toJSON());
+                                console.log("明文 JSON 数据:", result.toJSON());
                             } else {
-                                try {
-                                    // 深度克隆一份，防止混淆的原型链或复杂垃圾属性干扰控制台阅读
-                                    console.log("【加密前明文对象】:", JSON.parse(JSON.stringify(rawMessage)));
-                                } catch (e) {
-                                    // 针对含有 BigInt 或特殊循环引用的高阶混淆对象使用安全打印
-                                    console.log("【加密前明文(复杂引用对象)】:", rawMessage);
-                                }
+                                console.log("明文明细对象:", JSON.parse(JSON.stringify(result)));
                             }
-                        } else {
-                            console.log("【提示】: 该 Protobuf 结构发包时未携带任何载荷（第一个参数为空）");
+                        } catch (e) {
+                            // 容错处理：防止个别内部系统包转 JSON 失败导致游戏卡死
+                            console.log("明文对象(解析异常):", result);
                         }
 
-                        // 补漏：如果是嵌套加密，顺便监控一下写入流参数
-                        if (args.length > 1 && args[1]) {
-                            console.log("【附带 Writer/字节写入流状态】:", args[1]);
-                        }
-                    } catch (hookError) {
-                        // 顶级容错：确保即使我们的打印逻辑出错，也绝对不能卡死、中断或影响网页原本的通信和发包
-                        console.error("拦截内部异常(已安全跳过):", hookError);
-                    }
-
-                    // 3. 完美放行：将执行权和所有参数原封不动交回给原厂函数，确保游戏网络通信完全正常、不崩溃
-                    return originalEncodeFunc.apply(this, args);
-                };
-
-                // 为新函数打上免死金牌标记，防止其在内部二次触发 set 导致堆栈溢出
-                originalFunc = originalEncodeFunc;
-                originalEncodeFunc.__isEncodeHooked__ = true;
-                this._encode = hookedEncodeFunc;
-            } else {
-                this._encode = originalEncodeFunc;
-            }
-        },
-        get: function () {
-            return this._encode;
-        },
-        configurable: true, // 允许在必要时删除或重新配置此属性
-    });
-
-    console.log("%c=====================================================", "color: #00ffff;");
-    console.log("%c🚀 [Object 原型链 - encode 动态发包监控网已布下] ", "color: #00ffff; font-weight: bold;");
-    console.log("%c接下来只要页面任何位置初始化或调用 Protobuf 加密，控制台将即时刷出明文！", "color: #ffffff;");
-    console.log("%c=====================================================", "color: #00ffff;");
-})();
-///////////////////////////////////////
-// (function() {
-//   // 保存原始方法
-//   window.__cr_fun = window.Function;
-//   // 重写 function
-//   var myfun = function() {
-//       var args = Array.prototype.slice.call(arguments, 0, -1).join(","),
-//           src = arguments[arguments.length - 1];
-//       console.log(src);
-//       console.log("=============== Function end ===============");
-//       debugger;
-//       return window.__cr_fun.apply(this, arguments);
-//   }
-//   // 屏蔽js中对原生函数native属性的检测
-//   myfun.toString = function() {
-//       return window.__cr_fun + ""
-//   }
-//   Object.defineProperty(window, 'Function', {
-//       value: myfun
-//   });
-// })();
-
-/////////////////////////////////////////////////////////////
-// //拦截数据脚本
-// (function () {
-//     if (window.fetch) {
-//         console.log("window.fetch..." + window.fetch);
-//     } else {
-//         console.log("window.fetch.000000..");
-//     }
-
-//     const originalFetch = window.fetch;
-//     window.fetch = function (...args) {
-//         return originalFetch.apply(this, args).then(async (response) => {
-//             // 过滤你关心的接口 URL 关键词
-//             if (response && response.url.includes("/req")) {
-//                 const cloneRes = response.clone();
-
-//                 try {
-//                     const buffer = await cloneRes.arrayBuffer();
-//                     const bytes = new Uint8Array(buffer);
-//                     let binary = "";
-//                     bytes.forEach((b) => (binary += String.fromCharCode(b)));
-
-//                     console.log(`%c[Fetch 拦截] URL: ${response.url}`, "color: #00ff00; font-weight: bold;");
-//                     console.log("长度(Bytes):", bytes.length);
-//                     console.log("Base64数据:", btoa(binary));
-//                 } catch (e) {
-//                     console.error("拦截打印失败:", e);
-//                 }
-//             }
-
-//             return response;
-//         });
-//     };
-//     console.log("拦截下载脚本已就绪，等待目标请求触发...");
-// })();
-
-///////////////////////////////////////////////////
-//   (function() {
-//     // 1. 备份原生的 fetch [native code]
-//     const originalFetch = window.fetch;
-
-//     // 工具函数：利用 Base64 解码并计算并验证 Protobuf 长度
-//     function fixProtobufData(arrayBuffer) {
-//         const view = new Uint8Array(arrayBuffer);
-
-//         // 检查是否符合你提供的数据特征 (前四个字节通常是 08 01/02 10 00, 第五个字节是 2a)
-//         if (view.length > 5 && view[0] === 0x08 && view[2] === 0x10 && view[4] === 0x2a) {
-//             console.log("%c[ProtoHook] 检测到目标 Protobuf 数据流，正在计算合法长度...", "color: #00ff00");
-
-//             let lengthFieldStartIndex = 5;
-//             let declaredLength = 0;
-//             let shift = 0;
-
-//             // 解析 Varint32 格式的长度声明
-//             while (lengthFieldStartIndex < view.length) {
-//                 let byte = view[lengthFieldStartIndex];
-//                 declaredLength |= (byte & 0x7F) << shift;
-//                 lengthFieldStartIndex++;
-//                 if ((byte & 0x80) === 0) break;
-//             }
-
-//             // 计算后面实际剩余的字节数
-//             const actualRemainingLength = view.length - lengthFieldStartIndex;
-
-//             console.log(`[ProtoHook] 声明长度: ${declaredLength} 字节, 实际剩余: ${actualRemainingLength} 字节`);
-
-//             // 如果发现被截断（声明的长度大于实际拥有的长度）
-//             if (declaredLength > actualRemainingLength) {
-//                 console.warn(`[ProtoHook] 数据不完整！正在强行将声明长度由 ${declaredLength} 修正为 ${actualRemainingLength}`);
-
-//                 // 重新生成符合实际长度的 Varint 字节
-//                 let newLength = actualRemainingLength;
-//                 let varintBytes = [];
-//                 while (newLength > 0x7F) {
-//                     varintBytes.push((newLength & 0x7F) | 0x80);
-//                     newLength >>>= 7;
-//                 }
-//                 varintBytes.push(newLength & 0x7F);
-
-//                 // 组装修正后的新 Uint8Array
-//                 const headerPart = view.slice(0, 5); // 08 xx 10 00 2a
-//                 const dataPart = view.slice(lengthFieldStartIndex); // 实际的数据体
-
-//                 const newBuffer = new Uint8Array(headerPart.length + varintBytes.length + dataPart.length);
-//                 newBuffer.set(headerPart, 0);
-//                 newBuffer.set(varintBytes, headerPart.length);
-//                 newBuffer.set(dataPart, headerPart.length + varintBytes.length);
-
-//                 return newBuffer.buffer;
-//             } else {
-//                 console.log("[ProtoHook] 长度校验通过，无需修改。");
-//             }
-//         }
-//         return arrayBuffer;
-//     }
-
-//     // 2. 重写全局 fetch
-//     window.fetch = function(...args) {
-//         return originalFetch.apply(this, args).then(async (response) => {
-//             // 如果响应不是成功的，或者不是我们要拦截的类型，直接放行
-//             if (!response.ok) return response;
-
-//             // 克隆响应，防止读取流冲突
-//             const clonedResponse = response.clone();
-
-//             try {
-//                 // 拿到原始返回的二进制数据
-//                 const originalBuffer = await clonedResponse.arrayBuffer();
-
-//                 // 执行自动化长度修补
-//                 const fixedBuffer = fixProtobufData(originalBuffer);
-
-//                 // 构建全新的 Response 对象返回给网页/Wasm
-//                 return new Response(fixedBuffer, {
-//                     status: response.status,
-//                     statusText: response.statusText,
-//                     headers: response.headers
-//                 });
-//             } catch (err) {
-//                 console.error("[ProtoHook] 拦截修补失败，放行原始数据:", err);
-//                 return response;
-//             }
-//         });
-//     };
-
-//     console.log("%c[ProtoHook] 自动修补脚本已成功注入！正在监听网络请求...", "color: #1e90ff");
-// })();
-// const originalWasmMethod = window.__wbindgen_export_5; // 替换为实际的胶水函数名
-// window.__wbindgen_export_5 = function(arg0, arg1) {
-//     console.log("=== 捕获到传入 Wasm 的完整数据 ===");
-//     // 通常可以通过 Wasm 的内存视图（如 WASM_MEMORY.buffer）把完整的 Uint8Array 提取出来出来
-//     return originalWasmMethod.apply(this, arguments);
-// };
-
-//////////////////////////////
-///////////////////////////////////////////////////////////
-/////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////
-//////////////////////////////////////////////////////
-
-// (function () {
-//     let capturedProto = null;
-
-//     // 劫持所有对象上的 'GaiaResponse' 属性
-//     // 只要游戏底层一初始化这个解析器，就会触发我们的 set 陷阱
-//     Object.defineProperty(Object.prototype, "GaiaResponse", {
-//         set: function (value) {
-//             // this 就是那个隐藏的 _0x34c5dd 或者 _0x385c4b 协议大字典！
-//             if (this && !capturedProto) {
-//                 capturedProto = this;
-//                 window.REAL_PROTO = this; // 成功引渡到全局 window
-
-//                 console.log("%c========================================", "color: #00ff00; font-weight: bold;");
-//                 console.log("%c🎉 【全自动拦截器报捷！】已成功捕获真正的 Protobuf 协议大字典！", "color: #00ff00; font-weight: bold;");
-//                 console.log("你现在可以直接在控制台使用 window.REAL_PROTO 破译任何二进制流了。");
-//                 console.log("包含的解析器：", Object.keys(this));
-//                 console.log("%c========================================", "color: #00ff00; font-weight: bold;");
-//             }
-//             this._GaiaResponse = value; // 保证游戏原本的逻辑不受影响，不崩溃
-//         },
-//         get: function () {
-//             return this._GaiaResponse;
-//         },
-//         configurable: true,
-//     });
-
-//     console.log("🎯 全自动协议拦截网已布下，请开始刷新页面或开始游戏...");
-// })();
-
-// (function () {
-//     // 捕获所有 Wasm 传给 JS 的文本数据（绝大多数解密后的 JSON 或 Token 都会走这里）
-//     const originalTextDecoder = window.TextDecoder && window.TextDecoder.prototype.decode;
-//     if (originalTextDecoder) {
-//         window.TextDecoder.prototype.decode = function (...args) {
-//             const result = originalTextDecoder.apply(this, args);
-
-//             if (result.length > 0) {
-//                 if (result.indexOf("error_msg") != -1) {
-//                     let jsonRes = JSON.parse(result);
-//                     // //////////
-//                     //if (jsonRes.data && jsonRes.data.length > 0) {
-//                     // if (jsonRes.data) {
-//                     //     console.log(`==args==: ${args}`);
-//                     //     console.log(`==jsonRes.data==: ${jsonRes.data}`);
-
-//                     //     let ddd = window.REAL_PROTO(jsonRes.data);
-//                     //     // let jsonData = originalTextDecoder.apply(this, jsonRes.data);
-//                     //     console.log(ddd);
-//                     //     console.log(`==result==: ${result}`);
-//                     // }
-//                     console.log(`==result==: ${result}`);
-//                 }
-
-//                 /////////////////////
-//             }
-
-//             return result;
-//         };
-//     }
-
-//     // 捕获所有 wasm-bindgen 放入堆内存中的 JS 对象
-//     // 在底层，Wasm 把处理好的数据转成 JS 对象时，通常会调用这个自动生成的胶水方法
-//     const targetKeys = Object.keys(window).filter((k) => k.startsWith("__wbg_"));
-//     targetKeys.forEach((key) => {
-//         // 如果能找到名为 __wbg_set_xxx 或类似于对象转换的函数，可以对它们进行拦截
-//         // 注意：这里的具体函数名需要根据你第一问中看到的 js 胶水文件来定
-//     });
-
-//     console.log("【高阶监控已就绪】请正常在网页上点击操作，等待解密明文现身...");
-// })();
-
-// //拦截fetch数据
-// (function () {
-//     if (window.fetch) {
-//         console.log("window.fetch..." + window.fetch);
-//     } else {
-//         console.log("window.fetch.000000..");
-//     }
-
-//     const originalFetch = window.fetch;
-//     window.fetch = function (...args) {
-//         return originalFetch.apply(this, args).then(async (response) => {
-//             // 过滤你关心的接口 URL 关键词
-//             if (response && response.url.includes("/req")) {
-//                 const cloneRes = response.clone();
-
-//                 try {
-//                     const buffer = await cloneRes.arrayBuffer();
-//                     const bytes = new Uint8Array(buffer);
-//                     let binary = "";
-//                     bytes.forEach((b) => (binary += String.fromCharCode(b)));
-
-//                     console.log(`%c[Fetch 拦截] URL: ${response.url}`, "color: #00ff00; font-weight: bold;");
-//                     console.log("长度(Bytes):", bytes.length);
-//                     console.log("Base64数据:", btoa(binary));
-//                 } catch (e) {
-//                     console.error("拦截打印失败:", e);
-//                 }
-//             }
-
-//             return response;
-//         });
-//     };
-//     console.log("拦截下载脚本已就绪，等待目标请求触发...");
-// })();
-// //捕获解析后的JSON
-// (function () {
-//     // 捕获所有 Wasm 传给 JS 的文本数据（绝大多数解密后的 JSON 或 Token 都会走这里）
-//     const originalTextDecoder = window.TextDecoder && window.TextDecoder.prototype.decode;
-//     if (originalTextDecoder) {
-//         window.TextDecoder.prototype.decode = function (...args) {
-//             const result = originalTextDecoder.apply(this, args);
-//             if (result.type != null || result.error_msg != null || result.ret != null || result.data != null) {
-//                 console.log("=result=" + result);
-//             } else if (result.length < 500) {
-//                 console.log("=result1000=" + result);
-//             }
-
-//             return result;
-//         };
-//     }
-
-//     // 捕获所有 wasm-bindgen 放入堆内存中的 JS 对象
-//     // 在底层，Wasm 把处理好的数据转成 JS 对象时，通常会调用这个自动生成的胶水方法
-//     const targetKeys = Object.keys(window).filter((k) => k.startsWith("__wbg_"));
-//     targetKeys.forEach((key) => {
-//         // 如果能找到名为 __wbg_set_xxx 或类似于对象转换的函数，可以对它们进行拦截
-//         // 注意：这里的具体函数名需要根据你第一问中看到的 js 胶水文件来定
-//     });
-
-//     console.log("【高阶监控已就绪】请正常在网页上点击操作，等待解密明文现身...");
-// })();
-// (function () {
-//     // 捕获所有 Wasm 传给 JS 的文本数据（绝大多数解密后的 JSON 或 Token 都会走这里）
-//     const originalTextDecoder = window.TextEncoder && window.TextEncoder.prototype.encode;
-//     if (originalTextDecoder) {
-//         window.TextEncoder.prototype.encode = function (...args) {
-//           console.log("=result=encode");
-//             for (const arg of args) {
-//                 console.log("=json=" + result);
-//             }
-//             const result = originalTextDecoder.apply(this, args);
-//             // if (result.type != null || result.error_msg != null || result.ret != null || result.data != null) {
-//             //     console.log("=result=" + result);
-//             // } else if (result.length < 1000) {
-//             //     console.log("=result1000=" + result);
-//             // }
-
-//             return result;
-//         };
-//     }
-
-//     // // 捕获所有 wasm-bindgen 放入堆内存中的 JS 对象
-//     // // 在底层，Wasm 把处理好的数据转成 JS 对象时，通常会调用这个自动生成的胶水方法
-//     // const targetKeys = Object.keys(window).filter((k) => k.startsWith("__wbg_"));
-//     // targetKeys.forEach((key) => {
-//     //     // 如果能找到名为 __wbg_set_xxx 或类似于对象转换的函数，可以对它们进行拦截
-//     //     // 注意：这里的具体函数名需要根据你第一问中看到的 js 胶水文件来定
-//     // });
-
-//     console.log("【高阶监控已就绪】请正常在网页上点击操作，等待解密明文现身...");
-// })();
-//////////////////////////////////////////
-// (function() {
-//     const originalParse = JSON.parse;
-
-//     JSON.parse = function(text, reviver) {
-//         // 调用原生的反序列化
-//         const result = originalParse.call(this, text, reviver);
-
-//         try {
-//             // 过滤掉游戏日常的小数据（如本地存储配置），只看包含了核心游戏数据的结构
-//             // 你可以把 "user" 或 "data" 换成你在 TextDecoder 里看到过的零碎关键字
-//             if (text && text.length > 50) {
-//                 console.log("%c[JSON.parse 成功拦截内嵌数据]👇", "color: #1a73e8; font-weight: bold;");
-//                 console.dir(result);
-//             }
-//         } catch(e) {}
-
-//         return result;
-//     };
-//     console.log("JSON.parse 辅助监控已启动...");
-// })();
-///////////////////////////////////////////
-// (function () {
-//     const originalRegister = System.register;
-
-//     System.register = function (name, deps, declare) {
-//         // 1. 锁定你想要拦截的模块名称
-//         if (name === "chunks:///other.js") {
-//             console.log(`%c[SystemJS 成功拦截目标模块]: ${name}`, "color: #00ff00; font-weight: bold;");
-//             console.log("该模块的依赖列表 (deps):", deps);
-
-//             // 2. 包裹原有的 declare 回调函数
-//             const originalDeclare = declare;
-//             declare = function (_export, _context) {
-//                 // 3. 劫持 Cocos 传入的 export 函数，用于捕获该模块最终导出的所有对象
-//                 const customExport = function (key, value) {
-//                     console.log(`[other.js 尝试导出属性] 键: ${key}, 值:`, value);
-//                     return _export(key, value);
-//                 };
-
-//                 // 执行原厂 declare 逻辑
-//                 const executionResult = originalDeclare(customExport, _context);
-
-//                 // 4. 劫持 setters 数组。SystemJS 通过 setters 把依赖项（如 cc）传给模块
-//                 if (executionResult && executionResult.setters) {
-//                     const originalSetters = executionResult.setters;
-
-//                     executionResult.setters = originalSetters.map((originalSetter, index) => {
-//                         return function (m) {
-//                             // 🌟 这里的 m 就是对应的依赖对象！
-//                             // index 0 对应 "./FeatureManagerComponent-3ea92c06.js" 的导出对象
-//                             // index 1 对应 Cocos 核心的 "cc" 对象
-//                             console.log(`%c[成功拦截到依赖模块] 索引: ${index}, 名字: ${deps[index]}`, "color: #00ffff;");
-//                             console.log(`模块 ${deps[index]} 的明文内容/方法:`, m);
-
-//                             // 🚀 你可以在这里直接把它们保存到全局，方便在控制台随时调用研究：
-//                             if (deps[index] === "cc") window.CocosEngine = m;
-//                             if (deps[index].includes("FeatureManagerComponent")) window.FeatureManager = m;
-
-//                             // 恢复原始赋值
-//                             return originalSetter(m);
-//                         };
-//                     });
-//                 }
-//                 return executionResult;
-//             };
-//         }
-
-//         // 调用原生的注册方法
-//         return originalRegister.call(this, name, deps, declare);
-//     };
-//     console.log("SystemJS 动态监控拦截器已部署！请刷新游戏或等待模块加载...");
-// })();
-
-///////////////////////////////////
-///可用接口
-/////////////////////////////////////
-// ///拦截外层msg结构
-// (function () {
-//     // 捕获所有 Wasm 传给 JS 的文本数据（绝大多数解密后的 JSON 或 Token 都会走这里）
-//     const originalTextDecoder = window.TextDecoder && window.TextDecoder.prototype.decode;
-//     if (originalTextDecoder) {
-//         window.TextDecoder.prototype.decode = function (...args) {
-//             const result = originalTextDecoder.apply(this, args);
-
-//             if (result.length > 0) {
-//                 if (result.indexOf("error_msg") != -1) {
-//                     // let jsonRes = JSON.parse(result);
-//                     console.log(`==TextDecoder=jsonRes==:\r\n ${result}`);
-//                 }
-//             }
-
-//             return result;
-//         };
-//     }
-
-//     console.log("【高阶监控已就绪】请正常在网页上点击操作，等待解密明文现身...");
-// })();
-
-// ///拦截内层data解析
-// (function () {
-//     let originalDecode = null;
-
-//     // 1. 动态寻找并劫持 Object 原型链上的 decode 函数
-//     Object.defineProperty(Object.prototype, "decode", {
-//         set: function (fn) {
-//             // 如果传入的是一个函数，且还没被我们劫持过
-//             if (typeof fn === "function" && !fn.__isHooked__) {
-//                 const typeName = this.name || this.displayName || "UnknownProto";
-
-//                 // 重写真正的 decode 逻辑
-//                 const hookedFn = function (reader, length) {
-//                     // 执行原本的官方原生反序列化逻辑，拿到结果对象
-//                     const result = fn.apply(this, arguments);
-
-//                     try {
-//                         // 2. 核心打印逻辑
-//                         console.log(`%c[Protobuf 拦截成功] ➔ 结构名: ${typeName}`, "color: #00ff00; font-weight: bold; font-size: 12px;");
-
-//                         // 尝试转为纯净的 JSON 树结构打印，防止混淆的原生对象带有复杂原型
-//                         if (result && typeof result.toJSON === "function") {
-//                             // console.log("明文 JSON 数据:", result.toJSON());
-//                             console.log("明文 JSON 数据:", result.toJSON());
-//                         } else {
-//                             console.log("明文明细对象:", JSON.parse(JSON.stringify(result)));
-//                         }
-//                     } catch (e) {
-//                         // 容错处理：防止个别内部系统包转 JSON 失败导致游戏卡死
-//                         console.log("明文对象(解析异常):", result);
-//                     }
-
-//                     return result;
-//                 };
-
-//                 // 标记该函数已被劫持，防止死循环
-//                 fn.__isHooked__ = true;
-//                 this._decode = hookedFn;
-//             } else {
-//                 this._decode = fn;
-//             }
-//         },
-//         get: function () {
-//             return this._decode;
-//         },
-//         configurable: true,
-//     });
-
-//     console.log("%c=====================================================", "color: #00ffff;");
-//     console.log("%c🚀 [全自动通信破译网已布下] 接下来所有的 decode 接口都会在下方自动打印明文！", "color: #00ffff; font-weight: bold;");
-//     console.log("%c=====================================================", "color: #00ffff;");
-// })();
-
-// /////动态寻找并劫持 Object 原型链上的 encode 函数 并打印参数
-// // 在 Google Protobuf（或者大名鼎鼎的 protobufjs 库）的运行机制中，
-// // 所有的客户端明文请求数据在变成网络二进制乱码（Uint8Array）之前，百分之百必须通过 encode 函数进行序列化。
-// // 通过 Object.defineProperty 动态劫持 Object.prototype.encode，
-// // 可以在它接触到核心加密算法前的 1毫秒 拦截并捕获到最纯净、最赤裸的客户端发包请求明文对象。
-// // 以下是为您量身定制的纯动态寻找并劫持 Object.prototype.encode 的一体化高阶脚本，它能自动捕获并打印加密前的核心参数：javascript
-// (function () {
-//     // 1. 安全锁：防止在复杂的混淆环境或频繁刷新时重复注入导致死循环
-//     if (window.__Protobuf_Encode_Hooked__) {
-//         console.log("⚠️ 拦截防线已在运行中，请勿重复注入。");
-//         return;
-//     }
-//     window.__Protobuf_Encode_Hooked__ = true;
-
-//     // 2. 动态劫持核心：锁定 JavaScript 底层的 Object 原型链
-//     Object.defineProperty(Object.prototype, "encode", {
-//         set: function (originalEncodeFunc) {
-//             // 安全过滤：只有当对方赋予的是一个函数，且该函数还没被我们污染过时才进行重写
-//             if (typeof originalEncodeFunc === "function" && !originalEncodeFunc.__isEncodeHooked__) {
-//                 // 动态获取调用该函数的 Protobuf 结构体名称（例如：Request, SpinRequest, GameInfo等）
-//                 // 混淆严重时可能会返回 AnonymousClass 或特定代号，但结构体本身的形态可以通过参数还原
-//                 const protoMessageName = this.name || this.displayName || (this.constructor ? this.constructor.name : "UnknownProto");
-
-//                 // ➔ 重写并构建我们自己的代理函数
-//                 const hookedEncodeFunc = function (...args) {
-//                     try {
-//                         console.log(`%c[🔒 Protobuf 动态拦截成功] ➔ 结构体/类名: ${protoMessageName}`, "color: #00ffff; font-weight: bold; font-size: 13px;");
-
-//                         // 【核心目标】：在序列化加密前，提取并打印第一个参数明文
-//                         // 根据 Protobuf 官方规范：第一个参数 (args[0]) 是待加密的纯明文 JS 对象 (Message)
-//                         // 第二个参数 (args[1]) 是可选的二进制写入流 (Writer)
-//                         const rawMessage = args[0];
-
-//                         if (rawMessage !== undefined && rawMessage !== null) {
-//                             // 检查结构体本身是否自带官方的 toJSON 反序列化方案
-//                             if (typeof rawMessage.toJSON === "function") {
-//                                 console.log("【加密前明文 JSON】:", rawMessage.toJSON());
-//                             } else {
-//                                 try {
-//                                     // 深度克隆一份，防止混淆的原型链或复杂垃圾属性干扰控制台阅读
-//                                     console.log("【加密前明文对象】:", JSON.parse(JSON.stringify(rawMessage)));
-//                                 } catch (e) {
-//                                     // 针对含有 BigInt 或特殊循环引用的高阶混淆对象使用安全打印
-//                                     console.log("【加密前明文(复杂引用对象)】:", rawMessage);
-//                                 }
-//                             }
-//                         } else {
-//                             console.log("【提示】: 该 Protobuf 结构发包时未携带任何载荷（第一个参数为空）");
-//                         }
-
-//                         // 补漏：如果是嵌套加密，顺便监控一下写入流参数
-//                         if (args.length > 1 && args[1]) {
-//                             console.log("【附带 Writer/字节写入流状态】:", args[1]);
-//                         }
-//                     } catch (hookError) {
-//                         // 顶级容错：确保即使我们的打印逻辑出错，也绝对不能卡死、中断或影响网页原本的通信和发包
-//                         console.error("拦截内部异常(已安全跳过):", hookError);
-//                     }
-
-//                     // 3. 完美放行：将执行权和所有参数原封不动交回给原厂函数，确保游戏网络通信完全正常、不崩溃
-//                     return originalEncodeFunc.apply(this, args);
-//                 };
-
-//                 // 为新函数打上免死金牌标记，防止其在内部二次触发 set 导致堆栈溢出
-//                 originalFunc = originalEncodeFunc;
-//                 originalEncodeFunc.__isEncodeHooked__ = true;
-//                 this._encode = hookedEncodeFunc;
-//             } else {
-//                 this._encode = originalEncodeFunc;
-//             }
-//         },
-//         get: function () {
-//             return this._encode;
-//         },
-//         configurable: true, // 允许在必要时删除或重新配置此属性
-//     });
-
-//     console.log("%c=====================================================", "color: #00ffff;");
-//     console.log("%c🚀 [Object 原型链 - encode 动态发包监控网已布下] ", "color: #00ffff; font-weight: bold;");
-//     console.log("%c接下来只要页面任何位置初始化或调用 Protobuf 加密，控制台将即时刷出明文！", "color: #ffffff;");
-//     console.log("%c=====================================================", "color: #00ffff;");
-// })();
-
-//sendcommand
-(function () {
-    // 检查是否已经存在全局监控防线，防止重复注入导致死循环
-    if (window.__SendCommand_Hooked__) {
-        console.log("⚠️ 拦截防线已在运行中，请勿重复注入。");
-        return;
-    }
-    window.__SendCommand_Hooked__ = true;
-
-    // 核心劫持：通过属性描述符（Property Descriptor）锁定 Object 原型链
-    Object.defineProperty(Object.prototype, "SendCommand", {
-        set: function (originalFunc) {
-            // 安全过滤：只有当对方赋予的是一个函数，且该函数还没被我们污染过时才进行重写
-            if (typeof originalFunc === "function" && !originalFunc.__isHooked__) {
-                // 动态获取调用该函数的类名或上下文，方便我们在控制台一眼辨认来源
-                const contextName = this.constructor ? this.constructor.name : "AnonymousClass";
-
-                // ➔ 重写并构建我们自己的代理函数
-                const hookedFunc = function (...args) {
-                    try {
-                        console.log(`%c[🎯 Object原型链捕获成功] ➔ 触发源: ${contextName}.SendCommand`, "color: #ff007f; font-weight: bold; font-size: 13px;");
-
-                        // 1. 【核心目标】：提取、捕获并打印出加密前的第一个参数明文
-                        const firstParam = args[0];
-                        console.log(`==SendCommand=args=${firstParam}`);
-
-                        if (firstParam !== undefined && firstParam !== null) {
-                            if (typeof firstParam === "object") {
-                                // 场景 A：第一个参数是复杂的明文 JSON 请求对象
-                                if (typeof firstParam.toJSON === "function") {
-                                    let jsonData = firstParam.toJSON();
-                                    console.log("【加密前明文(JSON)】:", jsonData);
+                        return result;
+                    };
+
+                    // 标记该函数已被劫持，防止死循环
+                    fn.__isHooked__ = true;
+                    this._decode = hookedFn;
+                } else {
+                    this._decode = fn;
+                }
+            },
+            get: function () {
+                return this._decode;
+            },
+            configurable: true,
+        });
+
+        console.log("%c=====================================================", "color: #00ffff;");
+        console.log("%c🚀 [全自动通信破译网已布下] 接下来所有的 decode 接口都会在下方自动打印明文！", "color: #00ffff; font-weight: bold;");
+        console.log("%c=====================================================", "color: #00ffff;");
+    })();
+    /////动态寻找并劫持 Object 原型链上的 encode 函数 并打印参数
+    // 在 Google Protobuf（或者大名鼎鼎的 protobufjs 库）的运行机制中，
+    // 所有的客户端明文请求数据在变成网络二进制乱码（Uint8Array）之前，百分之百必须通过 encode 函数进行序列化。
+    // 通过 Object.defineProperty 动态劫持 Object.prototype.encode，
+    // 可以在它接触到核心加密算法前的 1毫秒 拦截并捕获到最纯净、最赤裸的客户端发包请求明文对象。
+    // 以下是为您量身定制的纯动态寻找并劫持 Object.prototype.encode 的一体化高阶脚本，它能自动捕获并打印加密前的核心参数：javascript
+    (function () {
+        // 1. 安全锁：防止在复杂的混淆环境或频繁刷新时重复注入导致死循环
+        if (window.__Protobuf_Encode_Hooked__) {
+            console.log("⚠️ 拦截防线已在运行中，请勿重复注入。");
+            return;
+        }
+        window.__Protobuf_Encode_Hooked__ = true;
+
+        // 2. 动态劫持核心：锁定 JavaScript 底层的 Object 原型链
+        Object.defineProperty(Object.prototype, "encode", {
+            set: function (originalEncodeFunc) {
+                // 安全过滤：只有当对方赋予的是一个函数，且该函数还没被我们污染过时才进行重写
+                if (typeof originalEncodeFunc === "function" && !originalEncodeFunc.__isEncodeHooked__) {
+                    // 动态获取调用该函数的 Protobuf 结构体名称（例如：Request, SpinRequest, GameInfo等）
+                    // 混淆严重时可能会返回 AnonymousClass 或特定代号，但结构体本身的形态可以通过参数还原
+                    const protoMessageName = this.name || this.displayName || (this.constructor ? this.constructor.name : "UnknownProto");
+
+                    // ➔ 重写并构建我们自己的代理函数
+                    const hookedEncodeFunc = function (...args) {
+                        try {
+                            console.log(
+                                `%c[🔒 Protobuf 动态拦截成功] ➔ 结构体/类名: ${protoMessageName}`,
+                                "color: #00ffff; font-weight: bold; font-size: 13px;",
+                            );
+
+                            // 【核心目标】：在序列化加密前，提取并打印第一个参数明文
+                            // 根据 Protobuf 官方规范：第一个参数 (args[0]) 是待加密的纯明文 JS 对象 (Message)
+                            // 第二个参数 (args[1]) 是可选的二进制写入流 (Writer)
+                            const rawMessage = args[0];
+
+                            if (rawMessage !== undefined && rawMessage !== null) {
+                                // 检查结构体本身是否自带官方的 toJSON 反序列化方案
+                                if (typeof rawMessage.toJSON === "function") {
+                                    console.log("【加密前明文 JSON】:", rawMessage.toJSON());
                                 } else {
                                     try {
-                                        // 深度克隆一份，防止混淆的原型链或复杂 Getter 干扰控制台阅读
-                                        console.log("【加密前明文(Object)】:", JSON.parse(JSON.stringify(firstParam)));
+                                        // 深度克隆一份，防止混淆的原型链或复杂垃圾属性干扰控制台阅读
+                                        console.log("【加密前明文对象】:", JSON.parse(JSON.stringify(rawMessage)));
                                     } catch (e) {
-                                        console.log("【加密前明文(复杂引用)】:", firstParam);
+                                        // 针对含有 BigInt 或特殊循环引用的高阶混淆对象使用安全打印
+                                        console.log("【加密前明文(复杂引用对象)】:", rawMessage);
                                     }
                                 }
                             } else {
-                                // 场景 B：第一个参数是基础类型（通常是路由命令字、消息 ID 或字符串，如 4001, "req_spin"）
-                                console.log(`【请求命令/ID】: %c${firstParam}`, "color: #00ff00; font-weight: bold; font-size: 12px;");
+                                console.log("【提示】: 该 Protobuf 结构发包时未携带任何载荷（第一个参数为空）");
                             }
-                        } else {
-                            console.log("【提示】: 该命令发包时未携带任何参数（第一个参数为空）");
+
+                            // 补漏：如果是嵌套加密，顺便监控一下写入流参数
+                            if (args.length > 1 && args[1]) {
+                                console.log("【附带 Writer/字节写入流状态】:", args[1]);
+                            }
+                        } catch (hookError) {
+                            // 顶级容错：确保即使我们的打印逻辑出错，也绝对不能卡死、中断或影响网页原本的通信和发包
+                            console.error("拦截内部异常(已安全跳过):", hookError);
                         }
 
-                        // 2. 补漏：打印出发包时携带的其余后续参数（如回调函数、超时时间等）
-                        if (args.length > 1) {
-                            console.log("【附带其余参数】:", args.slice(1));
-                        }
-                    } catch (hookError) {
-                        // 顶级容错：确保即使我们的打印逻辑出错，也绝对不能卡死、中断或影响网页本身的通信
-                        console.error("拦截内部异常(已安全跳过):", hookError);
-                    }
+                        // 3. 完美放行：将执行权和所有参数原封不动交回给原厂函数，确保游戏网络通信完全正常、不崩溃
+                        return originalEncodeFunc.apply(this, args);
+                    };
 
-                    // 3. 完美过桥：将执行权和所有参数原封不动交回给原厂函数，确保游戏网络通信完全正常、不崩溃
-                    return originalFunc.apply(this, args);
-                };
-
-                // 为新函数打上免死金牌标记，防止其在内部二次触发 set 导致堆栈溢出
-                originalFunc.__isHooked__ = true;
-                this._SendCommand = hookedFunc;
-            } else {
-                this._SendCommand = originalFunc;
-            }
-        },
-        get: function () {
-            return this._SendCommand;
-        },
-        configurable: true, // 允许我们在必要时删除或重新配置此属性
-    });
-
-    console.log("%c=====================================================", "color: #ff007f;");
-    console.log("%c🚀 [Object 原型链 - SendCommand 动态捕捉网已全线布下] ", "color: #ff007f; font-weight: bold;");
-    console.log("%c接下来只要页面任何位置初始化或调用该发包接口，控制台将即时刷出明文！", "color: #ffffff;");
-    console.log("%c=====================================================", "color: #ff007f;");
-})();
-
-///拦截外层msg结构
-(function () {
-    // 捕获所有 Wasm 传给 JS 的文本数据（绝大多数解密后的 JSON 或 Token 都会走这里）
-    const originalTextDecoder = window.TextDecoder && window.TextDecoder.prototype.decode;
-    if (originalTextDecoder) {
-        window.TextDecoder.prototype.decode = function (...args) {
-            const result = originalTextDecoder.apply(this, args);
-
-            if (result.length > 0) {
-                if (result.indexOf("error_msg") != -1) {
-                    // let jsonRes = JSON.parse(result);
-                    console.log(`==TextDecoder=jsonRes==:\r\n ${result}`);
+                    // 为新函数打上免死金牌标记，防止其在内部二次触发 set 导致堆栈溢出
+                    originalFunc = originalEncodeFunc;
+                    originalEncodeFunc.__isEncodeHooked__ = true;
+                    this._encode = hookedEncodeFunc;
+                } else {
+                    this._encode = originalEncodeFunc;
                 }
-            }
+            },
+            get: function () {
+                return this._encode;
+            },
+            configurable: true, // 允许在必要时删除或重新配置此属性
+        });
 
-            return result;
-        };
-    }
+        console.log("%c=====================================================", "color: #00ffff;");
+        console.log("%c🚀 [Object 原型链 - encode 动态发包监控网已布下] ", "color: #00ffff; font-weight: bold;");
+        console.log("%c接下来只要页面任何位置初始化或调用 Protobuf 加密，控制台将即时刷出明文！", "color: #ffffff;");
+        console.log("%c=====================================================", "color: #00ffff;");
+    })();
+    ///////////////////////////////////////
+    // (function() {
+    //   // 保存原始方法
+    //   window.__cr_fun = window.Function;
+    //   // 重写 function
+    //   var myfun = function() {
+    //       var args = Array.prototype.slice.call(arguments, 0, -1).join(","),
+    //           src = arguments[arguments.length - 1];
+    //       console.log(src);
+    //       console.log("=============== Function end ===============");
+    //       debugger;
+    //       return window.__cr_fun.apply(this, arguments);
+    //   }
+    //   // 屏蔽js中对原生函数native属性的检测
+    //   myfun.toString = function() {
+    //       return window.__cr_fun + ""
+    //   }
+    //   Object.defineProperty(window, 'Function', {
+    //       value: myfun
+    //   });
+    // })();
 
-    console.log("【高阶监控已就绪】请正常在网页上点击操作，等待解密明文现身...");
-})();
+    /////////////////////////////////////////////////////////////
+    // //拦截数据脚本
+    // (function () {
+    //     if (window.fetch) {
+    //         console.log("window.fetch..." + window.fetch);
+    //     } else {
+    //         console.log("window.fetch.000000..");
+    //     }
 
-///拦截内层data解析
-(function () {
-    let originalDecode = null;
+    //     const originalFetch = window.fetch;
+    //     window.fetch = function (...args) {
+    //         return originalFetch.apply(this, args).then(async (response) => {
+    //             // 过滤你关心的接口 URL 关键词
+    //             if (response && response.url.includes("/req")) {
+    //                 const cloneRes = response.clone();
 
-    // 1. 动态寻找并劫持 Object 原型链上的 decode 函数
-    Object.defineProperty(Object.prototype, "decode", {
-        set: function (fn) {
-            // 如果传入的是一个函数，且还没被我们劫持过
-            if (typeof fn === "function" && !fn.__isHooked__) {
-                const typeName = this.name || this.displayName || "UnknownProto";
+    //                 try {
+    //                     const buffer = await cloneRes.arrayBuffer();
+    //                     const bytes = new Uint8Array(buffer);
+    //                     let binary = "";
+    //                     bytes.forEach((b) => (binary += String.fromCharCode(b)));
 
-                // 重写真正的 decode 逻辑
-                const hookedFn = function (reader, length) {
-                    // 执行原本的官方原生反序列化逻辑，拿到结果对象
-                    const result = fn.apply(this, arguments);
+    //                     console.log(`%c[Fetch 拦截] URL: ${response.url}`, "color: #00ff00; font-weight: bold;");
+    //                     console.log("长度(Bytes):", bytes.length);
+    //                     console.log("Base64数据:", btoa(binary));
+    //                 } catch (e) {
+    //                     console.error("拦截打印失败:", e);
+    //                 }
+    //             }
 
-                    try {
-                        // 2. 核心打印逻辑
-                        console.log(`%c[Protobuf 拦截成功] ➔ 结构名: ${typeName}`, "color: #00ff00; font-weight: bold; font-size: 12px;");
+    //             return response;
+    //         });
+    //     };
+    //     console.log("拦截下载脚本已就绪，等待目标请求触发...");
+    // })();
 
-                        // 尝试转为纯净的 JSON 树结构打印，防止混淆的原生对象带有复杂原型
-                        if (result && typeof result.toJSON === "function") {
-                            // console.log("明文 JSON 数据:", result.toJSON());
-                            console.log("明文 JSON 数据:", result.toJSON());
-                        } else {
-                            console.log("明文明细对象:", JSON.parse(JSON.stringify(result)));
-                        }
-                    } catch (e) {
-                        // 容错处理：防止个别内部系统包转 JSON 失败导致游戏卡死
-                        console.log("明文对象(解析异常):", result);
-                    }
+    ///////////////////////////////////////////////////
+    //   (function() {
+    //     // 1. 备份原生的 fetch [native code]
+    //     const originalFetch = window.fetch;
 
-                    return result;
-                };
+    //     // 工具函数：利用 Base64 解码并计算并验证 Protobuf 长度
+    //     function fixProtobufData(arrayBuffer) {
+    //         const view = new Uint8Array(arrayBuffer);
 
-                // 标记该函数已被劫持，防止死循环
-                fn.__isHooked__ = true;
-                this._decode = hookedFn;
-            } else {
-                this._decode = fn;
-            }
-        },
-        get: function () {
-            return this._decode;
-        },
-        configurable: true,
-    });
+    //         // 检查是否符合你提供的数据特征 (前四个字节通常是 08 01/02 10 00, 第五个字节是 2a)
+    //         if (view.length > 5 && view[0] === 0x08 && view[2] === 0x10 && view[4] === 0x2a) {
+    //             console.log("%c[ProtoHook] 检测到目标 Protobuf 数据流，正在计算合法长度...", "color: #00ff00");
 
-    console.log("%c=====================================================", "color: #00ffff;");
-    console.log("%c🚀 [全自动通信破译网已布下] 接下来所有的 decode 接口都会在下方自动打印明文！", "color: #00ffff; font-weight: bold;");
-    console.log("%c=====================================================", "color: #00ffff;");
-})();
+    //             let lengthFieldStartIndex = 5;
+    //             let declaredLength = 0;
+    //             let shift = 0;
 
-/////动态寻找并劫持 Object 原型链上的 encode 函数 并打印参数
-// 在 Google Protobuf（或者大名鼎鼎的 protobufjs 库）的运行机制中，
-// 所有的客户端明文请求数据在变成网络二进制乱码（Uint8Array）之前，百分之百必须通过 encode 函数进行序列化。
-// 通过 Object.defineProperty 动态劫持 Object.prototype.encode，
-// 可以在它接触到核心加密算法前的 1毫秒 拦截并捕获到最纯净、最赤裸的客户端发包请求明文对象。
-// 以下是为您量身定制的纯动态寻找并劫持 Object.prototype.encode 的一体化高阶脚本，它能自动捕获并打印加密前的核心参数：javascript
-(function () {
-    // 1. 安全锁：防止在复杂的混淆环境或频繁刷新时重复注入导致死循环
-    if (window.__Protobuf_Encode_Hooked__) {
-        console.log("⚠️ 拦截防线已在运行中，请勿重复注入。");
-        return;
-    }
-    window.__Protobuf_Encode_Hooked__ = true;
+    //             // 解析 Varint32 格式的长度声明
+    //             while (lengthFieldStartIndex < view.length) {
+    //                 let byte = view[lengthFieldStartIndex];
+    //                 declaredLength |= (byte & 0x7F) << shift;
+    //                 lengthFieldStartIndex++;
+    //                 if ((byte & 0x80) === 0) break;
+    //             }
 
-    // 2. 动态劫持核心：锁定 JavaScript 底层的 Object 原型链
-    Object.defineProperty(Object.prototype, "encode", {
-        set: function (originalEncodeFunc) {
-            // 安全过滤：只有当对方赋予的是一个函数，且该函数还没被我们污染过时才进行重写
-            if (typeof originalEncodeFunc === "function" && !originalEncodeFunc.__isEncodeHooked__) {
-                // 动态获取调用该函数的 Protobuf 结构体名称（例如：Request, SpinRequest, GameInfo等）
-                // 混淆严重时可能会返回 AnonymousClass 或特定代号，但结构体本身的形态可以通过参数还原
-                const protoMessageName = this.name || this.displayName || (this.constructor ? this.constructor.name : "UnknownProto");
+    //             // 计算后面实际剩余的字节数
+    //             const actualRemainingLength = view.length - lengthFieldStartIndex;
 
-                // ➔ 重写并构建我们自己的代理函数
-                const hookedEncodeFunc = function (...args) {
-                    try {
-                        console.log(`%c[🔒 Protobuf 动态拦截成功] ➔ 结构体/类名: ${protoMessageName}`, "color: #00ffff; font-weight: bold; font-size: 13px;");
+    //             console.log(`[ProtoHook] 声明长度: ${declaredLength} 字节, 实际剩余: ${actualRemainingLength} 字节`);
 
-                        // 【核心目标】：在序列化加密前，提取并打印第一个参数明文
-                        // 根据 Protobuf 官方规范：第一个参数 (args[0]) 是待加密的纯明文 JS 对象 (Message)
-                        // 第二个参数 (args[1]) 是可选的二进制写入流 (Writer)
-                        const rawMessage = args[0];
+    //             // 如果发现被截断（声明的长度大于实际拥有的长度）
+    //             if (declaredLength > actualRemainingLength) {
+    //                 console.warn(`[ProtoHook] 数据不完整！正在强行将声明长度由 ${declaredLength} 修正为 ${actualRemainingLength}`);
 
-                        if (rawMessage !== undefined && rawMessage !== null) {
-                            // 检查结构体本身是否自带官方的 toJSON 反序列化方案
-                            if (typeof rawMessage.toJSON === "function") {
-                                console.log("【加密前明文 JSON】:", rawMessage.toJSON());
-                            } else {
-                                try {
-                                    // 深度克隆一份，防止混淆的原型链或复杂垃圾属性干扰控制台阅读
-                                    console.log("【加密前明文对象】:", JSON.parse(JSON.stringify(rawMessage)));
-                                } catch (e) {
-                                    // 针对含有 BigInt 或特殊循环引用的高阶混淆对象使用安全打印
-                                    console.log("【加密前明文(复杂引用对象)】:", rawMessage);
+    //                 // 重新生成符合实际长度的 Varint 字节
+    //                 let newLength = actualRemainingLength;
+    //                 let varintBytes = [];
+    //                 while (newLength > 0x7F) {
+    //                     varintBytes.push((newLength & 0x7F) | 0x80);
+    //                     newLength >>>= 7;
+    //                 }
+    //                 varintBytes.push(newLength & 0x7F);
+
+    //                 // 组装修正后的新 Uint8Array
+    //                 const headerPart = view.slice(0, 5); // 08 xx 10 00 2a
+    //                 const dataPart = view.slice(lengthFieldStartIndex); // 实际的数据体
+
+    //                 const newBuffer = new Uint8Array(headerPart.length + varintBytes.length + dataPart.length);
+    //                 newBuffer.set(headerPart, 0);
+    //                 newBuffer.set(varintBytes, headerPart.length);
+    //                 newBuffer.set(dataPart, headerPart.length + varintBytes.length);
+
+    //                 return newBuffer.buffer;
+    //             } else {
+    //                 console.log("[ProtoHook] 长度校验通过，无需修改。");
+    //             }
+    //         }
+    //         return arrayBuffer;
+    //     }
+
+    //     // 2. 重写全局 fetch
+    //     window.fetch = function(...args) {
+    //         return originalFetch.apply(this, args).then(async (response) => {
+    //             // 如果响应不是成功的，或者不是我们要拦截的类型，直接放行
+    //             if (!response.ok) return response;
+
+    //             // 克隆响应，防止读取流冲突
+    //             const clonedResponse = response.clone();
+
+    //             try {
+    //                 // 拿到原始返回的二进制数据
+    //                 const originalBuffer = await clonedResponse.arrayBuffer();
+
+    //                 // 执行自动化长度修补
+    //                 const fixedBuffer = fixProtobufData(originalBuffer);
+
+    //                 // 构建全新的 Response 对象返回给网页/Wasm
+    //                 return new Response(fixedBuffer, {
+    //                     status: response.status,
+    //                     statusText: response.statusText,
+    //                     headers: response.headers
+    //                 });
+    //             } catch (err) {
+    //                 console.error("[ProtoHook] 拦截修补失败，放行原始数据:", err);
+    //                 return response;
+    //             }
+    //         });
+    //     };
+
+    //     console.log("%c[ProtoHook] 自动修补脚本已成功注入！正在监听网络请求...", "color: #1e90ff");
+    // })();
+    // const originalWasmMethod = window.__wbindgen_export_5; // 替换为实际的胶水函数名
+    // window.__wbindgen_export_5 = function(arg0, arg1) {
+    //     console.log("=== 捕获到传入 Wasm 的完整数据 ===");
+    //     // 通常可以通过 Wasm 的内存视图（如 WASM_MEMORY.buffer）把完整的 Uint8Array 提取出来出来
+    //     return originalWasmMethod.apply(this, arguments);
+    // };
+
+    //////////////////////////////
+    ///////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////
+
+    // (function () {
+    //     let capturedProto = null;
+
+    //     // 劫持所有对象上的 'GaiaResponse' 属性
+    //     // 只要游戏底层一初始化这个解析器，就会触发我们的 set 陷阱
+    //     Object.defineProperty(Object.prototype, "GaiaResponse", {
+    //         set: function (value) {
+    //             // this 就是那个隐藏的 _0x34c5dd 或者 _0x385c4b 协议大字典！
+    //             if (this && !capturedProto) {
+    //                 capturedProto = this;
+    //                 window.REAL_PROTO = this; // 成功引渡到全局 window
+
+    //                 console.log("%c========================================", "color: #00ff00; font-weight: bold;");
+    //                 console.log("%c🎉 【全自动拦截器报捷！】已成功捕获真正的 Protobuf 协议大字典！", "color: #00ff00; font-weight: bold;");
+    //                 console.log("你现在可以直接在控制台使用 window.REAL_PROTO 破译任何二进制流了。");
+    //                 console.log("包含的解析器：", Object.keys(this));
+    //                 console.log("%c========================================", "color: #00ff00; font-weight: bold;");
+    //             }
+    //             this._GaiaResponse = value; // 保证游戏原本的逻辑不受影响，不崩溃
+    //         },
+    //         get: function () {
+    //             return this._GaiaResponse;
+    //         },
+    //         configurable: true,
+    //     });
+
+    //     console.log("🎯 全自动协议拦截网已布下，请开始刷新页面或开始游戏...");
+    // })();
+
+    // (function () {
+    //     // 捕获所有 Wasm 传给 JS 的文本数据（绝大多数解密后的 JSON 或 Token 都会走这里）
+    //     const originalTextDecoder = window.TextDecoder && window.TextDecoder.prototype.decode;
+    //     if (originalTextDecoder) {
+    //         window.TextDecoder.prototype.decode = function (...args) {
+    //             const result = originalTextDecoder.apply(this, args);
+
+    //             if (result.length > 0) {
+    //                 if (result.indexOf("error_msg") != -1) {
+    //                     let jsonRes = JSON.parse(result);
+    //                     // //////////
+    //                     //if (jsonRes.data && jsonRes.data.length > 0) {
+    //                     // if (jsonRes.data) {
+    //                     //     console.log(`==args==: ${args}`);
+    //                     //     console.log(`==jsonRes.data==: ${jsonRes.data}`);
+
+    //                     //     let ddd = window.REAL_PROTO(jsonRes.data);
+    //                     //     // let jsonData = originalTextDecoder.apply(this, jsonRes.data);
+    //                     //     console.log(ddd);
+    //                     //     console.log(`==result==: ${result}`);
+    //                     // }
+    //                     console.log(`==result==: ${result}`);
+    //                 }
+
+    //                 /////////////////////
+    //             }
+
+    //             return result;
+    //         };
+    //     }
+
+    //     // 捕获所有 wasm-bindgen 放入堆内存中的 JS 对象
+    //     // 在底层，Wasm 把处理好的数据转成 JS 对象时，通常会调用这个自动生成的胶水方法
+    //     const targetKeys = Object.keys(window).filter((k) => k.startsWith("__wbg_"));
+    //     targetKeys.forEach((key) => {
+    //         // 如果能找到名为 __wbg_set_xxx 或类似于对象转换的函数，可以对它们进行拦截
+    //         // 注意：这里的具体函数名需要根据你第一问中看到的 js 胶水文件来定
+    //     });
+
+    //     console.log("【高阶监控已就绪】请正常在网页上点击操作，等待解密明文现身...");
+    // })();
+
+    // //拦截fetch数据
+    // (function () {
+    //     if (window.fetch) {
+    //         console.log("window.fetch..." + window.fetch);
+    //     } else {
+    //         console.log("window.fetch.000000..");
+    //     }
+
+    //     const originalFetch = window.fetch;
+    //     window.fetch = function (...args) {
+    //         return originalFetch.apply(this, args).then(async (response) => {
+    //             // 过滤你关心的接口 URL 关键词
+    //             if (response && response.url.includes("/req")) {
+    //                 const cloneRes = response.clone();
+
+    //                 try {
+    //                     const buffer = await cloneRes.arrayBuffer();
+    //                     const bytes = new Uint8Array(buffer);
+    //                     let binary = "";
+    //                     bytes.forEach((b) => (binary += String.fromCharCode(b)));
+
+    //                     console.log(`%c[Fetch 拦截] URL: ${response.url}`, "color: #00ff00; font-weight: bold;");
+    //                     console.log("长度(Bytes):", bytes.length);
+    //                     console.log("Base64数据:", btoa(binary));
+    //                 } catch (e) {
+    //                     console.error("拦截打印失败:", e);
+    //                 }
+    //             }
+
+    //             return response;
+    //         });
+    //     };
+    //     console.log("拦截下载脚本已就绪，等待目标请求触发...");
+    // })();
+    // //捕获解析后的JSON
+    // (function () {
+    //     // 捕获所有 Wasm 传给 JS 的文本数据（绝大多数解密后的 JSON 或 Token 都会走这里）
+    //     const originalTextDecoder = window.TextDecoder && window.TextDecoder.prototype.decode;
+    //     if (originalTextDecoder) {
+    //         window.TextDecoder.prototype.decode = function (...args) {
+    //             const result = originalTextDecoder.apply(this, args);
+    //             if (result.type != null || result.error_msg != null || result.ret != null || result.data != null) {
+    //                 console.log("=result=" + result);
+    //             } else if (result.length < 500) {
+    //                 console.log("=result1000=" + result);
+    //             }
+
+    //             return result;
+    //         };
+    //     }
+
+    //     // 捕获所有 wasm-bindgen 放入堆内存中的 JS 对象
+    //     // 在底层，Wasm 把处理好的数据转成 JS 对象时，通常会调用这个自动生成的胶水方法
+    //     const targetKeys = Object.keys(window).filter((k) => k.startsWith("__wbg_"));
+    //     targetKeys.forEach((key) => {
+    //         // 如果能找到名为 __wbg_set_xxx 或类似于对象转换的函数，可以对它们进行拦截
+    //         // 注意：这里的具体函数名需要根据你第一问中看到的 js 胶水文件来定
+    //     });
+
+    //     console.log("【高阶监控已就绪】请正常在网页上点击操作，等待解密明文现身...");
+    // })();
+    // (function () {
+    //     // 捕获所有 Wasm 传给 JS 的文本数据（绝大多数解密后的 JSON 或 Token 都会走这里）
+    //     const originalTextDecoder = window.TextEncoder && window.TextEncoder.prototype.encode;
+    //     if (originalTextDecoder) {
+    //         window.TextEncoder.prototype.encode = function (...args) {
+    //           console.log("=result=encode");
+    //             for (const arg of args) {
+    //                 console.log("=json=" + result);
+    //             }
+    //             const result = originalTextDecoder.apply(this, args);
+    //             // if (result.type != null || result.error_msg != null || result.ret != null || result.data != null) {
+    //             //     console.log("=result=" + result);
+    //             // } else if (result.length < 1000) {
+    //             //     console.log("=result1000=" + result);
+    //             // }
+
+    //             return result;
+    //         };
+    //     }
+
+    //     // // 捕获所有 wasm-bindgen 放入堆内存中的 JS 对象
+    //     // // 在底层，Wasm 把处理好的数据转成 JS 对象时，通常会调用这个自动生成的胶水方法
+    //     // const targetKeys = Object.keys(window).filter((k) => k.startsWith("__wbg_"));
+    //     // targetKeys.forEach((key) => {
+    //     //     // 如果能找到名为 __wbg_set_xxx 或类似于对象转换的函数，可以对它们进行拦截
+    //     //     // 注意：这里的具体函数名需要根据你第一问中看到的 js 胶水文件来定
+    //     // });
+
+    //     console.log("【高阶监控已就绪】请正常在网页上点击操作，等待解密明文现身...");
+    // })();
+    //////////////////////////////////////////
+    // (function() {
+    //     const originalParse = JSON.parse;
+
+    //     JSON.parse = function(text, reviver) {
+    //         // 调用原生的反序列化
+    //         const result = originalParse.call(this, text, reviver);
+
+    //         try {
+    //             // 过滤掉游戏日常的小数据（如本地存储配置），只看包含了核心游戏数据的结构
+    //             // 你可以把 "user" 或 "data" 换成你在 TextDecoder 里看到过的零碎关键字
+    //             if (text && text.length > 50) {
+    //                 console.log("%c[JSON.parse 成功拦截内嵌数据]👇", "color: #1a73e8; font-weight: bold;");
+    //                 console.dir(result);
+    //             }
+    //         } catch(e) {}
+
+    //         return result;
+    //     };
+    //     console.log("JSON.parse 辅助监控已启动...");
+    // })();
+    ///////////////////////////////////////////
+    // (function () {
+    //     const originalRegister = System.register;
+
+    //     System.register = function (name, deps, declare) {
+    //         // 1. 锁定你想要拦截的模块名称
+    //         if (name === "chunks:///other.js") {
+    //             console.log(`%c[SystemJS 成功拦截目标模块]: ${name}`, "color: #00ff00; font-weight: bold;");
+    //             console.log("该模块的依赖列表 (deps):", deps);
+
+    //             // 2. 包裹原有的 declare 回调函数
+    //             const originalDeclare = declare;
+    //             declare = function (_export, _context) {
+    //                 // 3. 劫持 Cocos 传入的 export 函数，用于捕获该模块最终导出的所有对象
+    //                 const customExport = function (key, value) {
+    //                     console.log(`[other.js 尝试导出属性] 键: ${key}, 值:`, value);
+    //                     return _export(key, value);
+    //                 };
+
+    //                 // 执行原厂 declare 逻辑
+    //                 const executionResult = originalDeclare(customExport, _context);
+
+    //                 // 4. 劫持 setters 数组。SystemJS 通过 setters 把依赖项（如 cc）传给模块
+    //                 if (executionResult && executionResult.setters) {
+    //                     const originalSetters = executionResult.setters;
+
+    //                     executionResult.setters = originalSetters.map((originalSetter, index) => {
+    //                         return function (m) {
+    //                             // 🌟 这里的 m 就是对应的依赖对象！
+    //                             // index 0 对应 "./FeatureManagerComponent-3ea92c06.js" 的导出对象
+    //                             // index 1 对应 Cocos 核心的 "cc" 对象
+    //                             console.log(`%c[成功拦截到依赖模块] 索引: ${index}, 名字: ${deps[index]}`, "color: #00ffff;");
+    //                             console.log(`模块 ${deps[index]} 的明文内容/方法:`, m);
+
+    //                             // 🚀 你可以在这里直接把它们保存到全局，方便在控制台随时调用研究：
+    //                             if (deps[index] === "cc") window.CocosEngine = m;
+    //                             if (deps[index].includes("FeatureManagerComponent")) window.FeatureManager = m;
+
+    //                             // 恢复原始赋值
+    //                             return originalSetter(m);
+    //                         };
+    //                     });
+    //                 }
+    //                 return executionResult;
+    //             };
+    //         }
+
+    //         // 调用原生的注册方法
+    //         return originalRegister.call(this, name, deps, declare);
+    //     };
+    //     console.log("SystemJS 动态监控拦截器已部署！请刷新游戏或等待模块加载...");
+    // })();
+
+    ///////////////////////////////////
+    ///可用接口
+    /////////////////////////////////////
+    // ///拦截外层msg结构
+    // (function () {
+    //     // 捕获所有 Wasm 传给 JS 的文本数据（绝大多数解密后的 JSON 或 Token 都会走这里）
+    //     const originalTextDecoder = window.TextDecoder && window.TextDecoder.prototype.decode;
+    //     if (originalTextDecoder) {
+    //         window.TextDecoder.prototype.decode = function (...args) {
+    //             const result = originalTextDecoder.apply(this, args);
+
+    //             if (result.length > 0) {
+    //                 if (result.indexOf("error_msg") != -1) {
+    //                     // let jsonRes = JSON.parse(result);
+    //                     console.log(`==TextDecoder=jsonRes==:\r\n ${result}`);
+    //                 }
+    //             }
+
+    //             return result;
+    //         };
+    //     }
+
+    //     console.log("【高阶监控已就绪】请正常在网页上点击操作，等待解密明文现身...");
+    // })();
+
+    // ///拦截内层data解析
+    // (function () {
+    //     let originalDecode = null;
+
+    //     // 1. 动态寻找并劫持 Object 原型链上的 decode 函数
+    //     Object.defineProperty(Object.prototype, "decode", {
+    //         set: function (fn) {
+    //             // 如果传入的是一个函数，且还没被我们劫持过
+    //             if (typeof fn === "function" && !fn.__isHooked__) {
+    //                 const typeName = this.name || this.displayName || "UnknownProto";
+
+    //                 // 重写真正的 decode 逻辑
+    //                 const hookedFn = function (reader, length) {
+    //                     // 执行原本的官方原生反序列化逻辑，拿到结果对象
+    //                     const result = fn.apply(this, arguments);
+
+    //                     try {
+    //                         // 2. 核心打印逻辑
+    //                         console.log(`%c[Protobuf 拦截成功] ➔ 结构名: ${typeName}`, "color: #00ff00; font-weight: bold; font-size: 12px;");
+
+    //                         // 尝试转为纯净的 JSON 树结构打印，防止混淆的原生对象带有复杂原型
+    //                         if (result && typeof result.toJSON === "function") {
+    //                             // console.log("明文 JSON 数据:", result.toJSON());
+    //                             console.log("明文 JSON 数据:", result.toJSON());
+    //                         } else {
+    //                             console.log("明文明细对象:", JSON.parse(JSON.stringify(result)));
+    //                         }
+    //                     } catch (e) {
+    //                         // 容错处理：防止个别内部系统包转 JSON 失败导致游戏卡死
+    //                         console.log("明文对象(解析异常):", result);
+    //                     }
+
+    //                     return result;
+    //                 };
+
+    //                 // 标记该函数已被劫持，防止死循环
+    //                 fn.__isHooked__ = true;
+    //                 this._decode = hookedFn;
+    //             } else {
+    //                 this._decode = fn;
+    //             }
+    //         },
+    //         get: function () {
+    //             return this._decode;
+    //         },
+    //         configurable: true,
+    //     });
+
+    //     console.log("%c=====================================================", "color: #00ffff;");
+    //     console.log("%c🚀 [全自动通信破译网已布下] 接下来所有的 decode 接口都会在下方自动打印明文！", "color: #00ffff; font-weight: bold;");
+    //     console.log("%c=====================================================", "color: #00ffff;");
+    // })();
+
+    // /////动态寻找并劫持 Object 原型链上的 encode 函数 并打印参数
+    // // 在 Google Protobuf（或者大名鼎鼎的 protobufjs 库）的运行机制中，
+    // // 所有的客户端明文请求数据在变成网络二进制乱码（Uint8Array）之前，百分之百必须通过 encode 函数进行序列化。
+    // // 通过 Object.defineProperty 动态劫持 Object.prototype.encode，
+    // // 可以在它接触到核心加密算法前的 1毫秒 拦截并捕获到最纯净、最赤裸的客户端发包请求明文对象。
+    // // 以下是为您量身定制的纯动态寻找并劫持 Object.prototype.encode 的一体化高阶脚本，它能自动捕获并打印加密前的核心参数：javascript
+    // (function () {
+    //     // 1. 安全锁：防止在复杂的混淆环境或频繁刷新时重复注入导致死循环
+    //     if (window.__Protobuf_Encode_Hooked__) {
+    //         console.log("⚠️ 拦截防线已在运行中，请勿重复注入。");
+    //         return;
+    //     }
+    //     window.__Protobuf_Encode_Hooked__ = true;
+
+    //     // 2. 动态劫持核心：锁定 JavaScript 底层的 Object 原型链
+    //     Object.defineProperty(Object.prototype, "encode", {
+    //         set: function (originalEncodeFunc) {
+    //             // 安全过滤：只有当对方赋予的是一个函数，且该函数还没被我们污染过时才进行重写
+    //             if (typeof originalEncodeFunc === "function" && !originalEncodeFunc.__isEncodeHooked__) {
+    //                 // 动态获取调用该函数的 Protobuf 结构体名称（例如：Request, SpinRequest, GameInfo等）
+    //                 // 混淆严重时可能会返回 AnonymousClass 或特定代号，但结构体本身的形态可以通过参数还原
+    //                 const protoMessageName = this.name || this.displayName || (this.constructor ? this.constructor.name : "UnknownProto");
+
+    //                 // ➔ 重写并构建我们自己的代理函数
+    //                 const hookedEncodeFunc = function (...args) {
+    //                     try {
+    //                         console.log(`%c[🔒 Protobuf 动态拦截成功] ➔ 结构体/类名: ${protoMessageName}`, "color: #00ffff; font-weight: bold; font-size: 13px;");
+
+    //                         // 【核心目标】：在序列化加密前，提取并打印第一个参数明文
+    //                         // 根据 Protobuf 官方规范：第一个参数 (args[0]) 是待加密的纯明文 JS 对象 (Message)
+    //                         // 第二个参数 (args[1]) 是可选的二进制写入流 (Writer)
+    //                         const rawMessage = args[0];
+
+    //                         if (rawMessage !== undefined && rawMessage !== null) {
+    //                             // 检查结构体本身是否自带官方的 toJSON 反序列化方案
+    //                             if (typeof rawMessage.toJSON === "function") {
+    //                                 console.log("【加密前明文 JSON】:", rawMessage.toJSON());
+    //                             } else {
+    //                                 try {
+    //                                     // 深度克隆一份，防止混淆的原型链或复杂垃圾属性干扰控制台阅读
+    //                                     console.log("【加密前明文对象】:", JSON.parse(JSON.stringify(rawMessage)));
+    //                                 } catch (e) {
+    //                                     // 针对含有 BigInt 或特殊循环引用的高阶混淆对象使用安全打印
+    //                                     console.log("【加密前明文(复杂引用对象)】:", rawMessage);
+    //                                 }
+    //                             }
+    //                         } else {
+    //                             console.log("【提示】: 该 Protobuf 结构发包时未携带任何载荷（第一个参数为空）");
+    //                         }
+
+    //                         // 补漏：如果是嵌套加密，顺便监控一下写入流参数
+    //                         if (args.length > 1 && args[1]) {
+    //                             console.log("【附带 Writer/字节写入流状态】:", args[1]);
+    //                         }
+    //                     } catch (hookError) {
+    //                         // 顶级容错：确保即使我们的打印逻辑出错，也绝对不能卡死、中断或影响网页原本的通信和发包
+    //                         console.error("拦截内部异常(已安全跳过):", hookError);
+    //                     }
+
+    //                     // 3. 完美放行：将执行权和所有参数原封不动交回给原厂函数，确保游戏网络通信完全正常、不崩溃
+    //                     return originalEncodeFunc.apply(this, args);
+    //                 };
+
+    //                 // 为新函数打上免死金牌标记，防止其在内部二次触发 set 导致堆栈溢出
+    //                 originalFunc = originalEncodeFunc;
+    //                 originalEncodeFunc.__isEncodeHooked__ = true;
+    //                 this._encode = hookedEncodeFunc;
+    //             } else {
+    //                 this._encode = originalEncodeFunc;
+    //             }
+    //         },
+    //         get: function () {
+    //             return this._encode;
+    //         },
+    //         configurable: true, // 允许在必要时删除或重新配置此属性
+    //     });
+
+    //     console.log("%c=====================================================", "color: #00ffff;");
+    //     console.log("%c🚀 [Object 原型链 - encode 动态发包监控网已布下] ", "color: #00ffff; font-weight: bold;");
+    //     console.log("%c接下来只要页面任何位置初始化或调用 Protobuf 加密，控制台将即时刷出明文！", "color: #ffffff;");
+    //     console.log("%c=====================================================", "color: #00ffff;");
+    // })();
+
+    //sendcommand
+    (function () {
+        // 检查是否已经存在全局监控防线，防止重复注入导致死循环
+        if (window.__SendCommand_Hooked__) {
+            console.log("⚠️ 拦截防线已在运行中，请勿重复注入。");
+            return;
+        }
+        window.__SendCommand_Hooked__ = true;
+
+        // 核心劫持：通过属性描述符（Property Descriptor）锁定 Object 原型链
+        Object.defineProperty(Object.prototype, "SendCommand", {
+            set: function (originalFunc) {
+                // 安全过滤：只有当对方赋予的是一个函数，且该函数还没被我们污染过时才进行重写
+                if (typeof originalFunc === "function" && !originalFunc.__isHooked__) {
+                    // 动态获取调用该函数的类名或上下文，方便我们在控制台一眼辨认来源
+                    const contextName = this.constructor ? this.constructor.name : "AnonymousClass";
+
+                    // ➔ 重写并构建我们自己的代理函数
+                    const hookedFunc = function (...args) {
+                        try {
+                            console.log(
+                                `%c[🎯 Object原型链捕获成功] ➔ 触发源: ${contextName}.SendCommand`,
+                                "color: #ff007f; font-weight: bold; font-size: 13px;",
+                            );
+
+                            // 1. 【核心目标】：提取、捕获并打印出加密前的第一个参数明文
+                            const firstParam = args[0];
+                            console.log(`==SendCommand=args=${firstParam}`);
+
+                            if (firstParam !== undefined && firstParam !== null) {
+                                if (typeof firstParam === "object") {
+                                    // 场景 A：第一个参数是复杂的明文 JSON 请求对象
+                                    if (typeof firstParam.toJSON === "function") {
+                                        let jsonData = firstParam.toJSON();
+                                        console.log("【加密前明文(JSON)】:", jsonData);
+                                    } else {
+                                        try {
+                                            // 深度克隆一份，防止混淆的原型链或复杂 Getter 干扰控制台阅读
+                                            console.log("【加密前明文(Object)】:", JSON.parse(JSON.stringify(firstParam)));
+                                        } catch (e) {
+                                            console.log("【加密前明文(复杂引用)】:", firstParam);
+                                        }
+                                    }
+                                } else {
+                                    // 场景 B：第一个参数是基础类型（通常是路由命令字、消息 ID 或字符串，如 4001, "req_spin"）
+                                    console.log(`【请求命令/ID】: %c${firstParam}`, "color: #00ff00; font-weight: bold; font-size: 12px;");
                                 }
+                            } else {
+                                console.log("【提示】: 该命令发包时未携带任何参数（第一个参数为空）");
                             }
-                        } else {
-                            console.log("【提示】: 该 Protobuf 结构发包时未携带任何载荷（第一个参数为空）");
+
+                            // 2. 补漏：打印出发包时携带的其余后续参数（如回调函数、超时时间等）
+                            if (args.length > 1) {
+                                console.log("【附带其余参数】:", args.slice(1));
+                            }
+                        } catch (hookError) {
+                            // 顶级容错：确保即使我们的打印逻辑出错，也绝对不能卡死、中断或影响网页本身的通信
+                            console.error("拦截内部异常(已安全跳过):", hookError);
                         }
 
-                        // 补漏：如果是嵌套加密，顺便监控一下写入流参数
-                        if (args.length > 1 && args[1]) {
-                            console.log("【附带 Writer/字节写入流状态】:", args[1]);
-                        }
-                    } catch (hookError) {
-                        // 顶级容错：确保即使我们的打印逻辑出错，也绝对不能卡死、中断或影响网页原本的通信和发包
-                        console.error("拦截内部异常(已安全跳过):", hookError);
+                        // 3. 完美过桥：将执行权和所有参数原封不动交回给原厂函数，确保游戏网络通信完全正常、不崩溃
+                        return originalFunc.apply(this, args);
+                    };
+
+                    // 为新函数打上免死金牌标记，防止其在内部二次触发 set 导致堆栈溢出
+                    originalFunc.__isHooked__ = true;
+                    this._SendCommand = hookedFunc;
+                } else {
+                    this._SendCommand = originalFunc;
+                }
+            },
+            get: function () {
+                return this._SendCommand;
+            },
+            configurable: true, // 允许我们在必要时删除或重新配置此属性
+        });
+
+        console.log("%c=====================================================", "color: #ff007f;");
+        console.log("%c🚀 [Object 原型链 - SendCommand 动态捕捉网已全线布下] ", "color: #ff007f; font-weight: bold;");
+        console.log("%c接下来只要页面任何位置初始化或调用该发包接口，控制台将即时刷出明文！", "color: #ffffff;");
+        console.log("%c=====================================================", "color: #ff007f;");
+    })();
+
+    ///拦截外层msg结构
+    (function () {
+        // 捕获所有 Wasm 传给 JS 的文本数据（绝大多数解密后的 JSON 或 Token 都会走这里）
+        const originalTextDecoder = window.TextDecoder && window.TextDecoder.prototype.decode;
+        if (originalTextDecoder) {
+            window.TextDecoder.prototype.decode = function (...args) {
+                const result = originalTextDecoder.apply(this, args);
+
+                if (result.length > 0) {
+                    if (result.indexOf("error_msg") != -1) {
+                        // let jsonRes = JSON.parse(result);
+                        console.log(`==TextDecoder=jsonRes==:\r\n ${result}`);
                     }
+                }
 
-                    // 3. 完美放行：将执行权和所有参数原封不动交回给原厂函数，确保游戏网络通信完全正常、不崩溃
-                    return originalEncodeFunc.apply(this, args);
-                };
+                return result;
+            };
+        }
 
-                // 为新函数打上免死金牌标记，防止其在内部二次触发 set 导致堆栈溢出
-                originalFunc = originalEncodeFunc;
-                originalEncodeFunc.__isEncodeHooked__ = true;
-                this._encode = hookedEncodeFunc;
-            } else {
-                this._encode = originalEncodeFunc;
-            }
-        },
-        get: function () {
-            return this._encode;
-        },
-        configurable: true, // 允许在必要时删除或重新配置此属性
-    });
+        console.log("【高阶监控已就绪】请正常在网页上点击操作，等待解密明文现身...");
+    })();
 
-    console.log("%c=====================================================", "color: #00ffff;");
-    console.log("%c🚀 [Object 原型链 - encode 动态发包监控网已布下] ", "color: #00ffff; font-weight: bold;");
-    console.log("%c接下来只要页面任何位置初始化或调用 Protobuf 加密，控制台将即时刷出明文！", "color: #ffffff;");
-    console.log("%c=====================================================", "color: #00ffff;");
-})();
+    ///拦截内层data解析
+    (function () {
+        let originalDecode = null;
+
+        // 1. 动态寻找并劫持 Object 原型链上的 decode 函数
+        Object.defineProperty(Object.prototype, "decode", {
+            set: function (fn) {
+                // 如果传入的是一个函数，且还没被我们劫持过
+                if (typeof fn === "function" && !fn.__isHooked__) {
+                    const typeName = this.name || this.displayName || "UnknownProto";
+
+                    // 重写真正的 decode 逻辑
+                    const hookedFn = function (reader, length) {
+                        // 执行原本的官方原生反序列化逻辑，拿到结果对象
+                        const result = fn.apply(this, arguments);
+
+                        try {
+                            // 2. 核心打印逻辑
+                            console.log(`%c[Protobuf 拦截成功] ➔ 结构名: ${typeName}`, "color: #00ff00; font-weight: bold; font-size: 12px;");
+
+                            // 尝试转为纯净的 JSON 树结构打印，防止混淆的原生对象带有复杂原型
+                            if (result && typeof result.toJSON === "function") {
+                                // console.log("明文 JSON 数据:", result.toJSON());
+                                console.log("明文 JSON 数据:", result.toJSON());
+                            } else {
+                                console.log("明文明细对象:", JSON.parse(JSON.stringify(result)));
+                            }
+                        } catch (e) {
+                            // 容错处理：防止个别内部系统包转 JSON 失败导致游戏卡死
+                            console.log("明文对象(解析异常):", result);
+                        }
+
+                        return result;
+                    };
+
+                    // 标记该函数已被劫持，防止死循环
+                    fn.__isHooked__ = true;
+                    this._decode = hookedFn;
+                } else {
+                    this._decode = fn;
+                }
+            },
+            get: function () {
+                return this._decode;
+            },
+            configurable: true,
+        });
+
+        console.log("%c=====================================================", "color: #00ffff;");
+        console.log("%c🚀 [全自动通信破译网已布下] 接下来所有的 decode 接口都会在下方自动打印明文！", "color: #00ffff; font-weight: bold;");
+        console.log("%c=====================================================", "color: #00ffff;");
+    })();
+
+    /////动态寻找并劫持 Object 原型链上的 encode 函数 并打印参数
+    // 在 Google Protobuf（或者大名鼎鼎的 protobufjs 库）的运行机制中，
+    // 所有的客户端明文请求数据在变成网络二进制乱码（Uint8Array）之前，百分之百必须通过 encode 函数进行序列化。
+    // 通过 Object.defineProperty 动态劫持 Object.prototype.encode，
+    // 可以在它接触到核心加密算法前的 1毫秒 拦截并捕获到最纯净、最赤裸的客户端发包请求明文对象。
+    // 以下是为您量身定制的纯动态寻找并劫持 Object.prototype.encode 的一体化高阶脚本，它能自动捕获并打印加密前的核心参数：javascript
+    (function () {
+        // 1. 安全锁：防止在复杂的混淆环境或频繁刷新时重复注入导致死循环
+        if (window.__Protobuf_Encode_Hooked__) {
+            console.log("⚠️ 拦截防线已在运行中，请勿重复注入。");
+            return;
+        }
+        window.__Protobuf_Encode_Hooked__ = true;
+
+        // 2. 动态劫持核心：锁定 JavaScript 底层的 Object 原型链
+        Object.defineProperty(Object.prototype, "encode", {
+            set: function (originalEncodeFunc) {
+                // 安全过滤：只有当对方赋予的是一个函数，且该函数还没被我们污染过时才进行重写
+                if (typeof originalEncodeFunc === "function" && !originalEncodeFunc.__isEncodeHooked__) {
+                    // 动态获取调用该函数的 Protobuf 结构体名称（例如：Request, SpinRequest, GameInfo等）
+                    // 混淆严重时可能会返回 AnonymousClass 或特定代号，但结构体本身的形态可以通过参数还原
+                    const protoMessageName = this.name || this.displayName || (this.constructor ? this.constructor.name : "UnknownProto");
+
+                    // ➔ 重写并构建我们自己的代理函数
+                    const hookedEncodeFunc = function (...args) {
+                        try {
+                            console.log(
+                                `%c[🔒 Protobuf 动态拦截成功] ➔ 结构体/类名: ${protoMessageName}`,
+                                "color: #00ffff; font-weight: bold; font-size: 13px;",
+                            );
+
+                            // 【核心目标】：在序列化加密前，提取并打印第一个参数明文
+                            // 根据 Protobuf 官方规范：第一个参数 (args[0]) 是待加密的纯明文 JS 对象 (Message)
+                            // 第二个参数 (args[1]) 是可选的二进制写入流 (Writer)
+                            const rawMessage = args[0];
+
+                            if (rawMessage !== undefined && rawMessage !== null) {
+                                // 检查结构体本身是否自带官方的 toJSON 反序列化方案
+                                if (typeof rawMessage.toJSON === "function") {
+                                    console.log("【加密前明文 JSON】:", rawMessage.toJSON());
+                                } else {
+                                    try {
+                                        // 深度克隆一份，防止混淆的原型链或复杂垃圾属性干扰控制台阅读
+                                        console.log("【加密前明文对象】:", JSON.parse(JSON.stringify(rawMessage)));
+                                    } catch (e) {
+                                        // 针对含有 BigInt 或特殊循环引用的高阶混淆对象使用安全打印
+                                        console.log("【加密前明文(复杂引用对象)】:", rawMessage);
+                                    }
+                                }
+                            } else {
+                                console.log("【提示】: 该 Protobuf 结构发包时未携带任何载荷（第一个参数为空）");
+                            }
+
+                            // 补漏：如果是嵌套加密，顺便监控一下写入流参数
+                            if (args.length > 1 && args[1]) {
+                                console.log("【附带 Writer/字节写入流状态】:", args[1]);
+                            }
+                        } catch (hookError) {
+                            // 顶级容错：确保即使我们的打印逻辑出错，也绝对不能卡死、中断或影响网页原本的通信和发包
+                            console.error("拦截内部异常(已安全跳过):", hookError);
+                        }
+
+                        // 3. 完美放行：将执行权和所有参数原封不动交回给原厂函数，确保游戏网络通信完全正常、不崩溃
+                        return originalEncodeFunc.apply(this, args);
+                    };
+
+                    // 为新函数打上免死金牌标记，防止其在内部二次触发 set 导致堆栈溢出
+                    originalFunc = originalEncodeFunc;
+                    originalEncodeFunc.__isEncodeHooked__ = true;
+                    this._encode = hookedEncodeFunc;
+                } else {
+                    this._encode = originalEncodeFunc;
+                }
+            },
+            get: function () {
+                return this._encode;
+            },
+            configurable: true, // 允许在必要时删除或重新配置此属性
+        });
+
+        console.log("%c=====================================================", "color: #00ffff;");
+        console.log("%c🚀 [Object 原型链 - encode 动态发包监控网已布下] ", "color: #00ffff; font-weight: bold;");
+        console.log("%c接下来只要页面任何位置初始化或调用 Protobuf 加密，控制台将即时刷出明文！", "color: #ffffff;");
+        console.log("%c=====================================================", "color: #00ffff;");
+    })();
+}
