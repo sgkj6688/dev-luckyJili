@@ -1,3 +1,19 @@
+// 1. 动态创建 script 标签
+const script = document.createElement("script");
+// 2. 设置 vConsole 的 CDN 地址
+script.src = "https://unpkg.com/vconsole@latest/dist/vconsole.min.js";
+// 3. 监听脚本加载完成事件，完成后再进行初始化
+script.onload = function () {
+    // 建议加上判断，避免在正式线上环境对普通用户显示
+    if (location.protocol === "http:") {
+        // 脚本加载完后，window 上才会有 VConsole 对象
+        window.vConsole = new window.VConsole();
+        console.log("vConsole 初始化成功！");
+    }
+};
+// 4. 将 script 标签插入到页面中，触发下载
+document.head.appendChild(script);
+
 (function () {
     // 轮询等待 cc 对象初始化
     const timer = setInterval(() => {
