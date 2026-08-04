@@ -1,5 +1,5 @@
 if (location.protocol === "http:") {
-    // 1. 动态创建 script 标签
+    //// 1. 动态创建 script 标签
     const script = document.createElement("script");
     // 2. 设置 vConsole 的 CDN 地址
     script.src = "https://unpkg.com/vconsole@latest/dist/vconsole.min.js";
@@ -16,55 +16,55 @@ if (location.protocol === "http:") {
     document.head.appendChild(script);
 
     /////-----11111
-    // (function () {
-    //     // 轮询等待 cc 对象初始化
-    //     const timer = setInterval(() => {
-    //         if (typeof cc !== "undefined") {
-    //             clearInterval(timer);
-    //             disableCocosASTC();
-    //         }
-    //     }, 50);
+    (function () {
+        // 轮询等待 cc 对象初始化
+        const timer = setInterval(() => {
+            if (typeof cc !== "undefined") {
+                clearInterval(timer);
+                disableCocosASTC();
+            }
+        }, 50);
 
-    //     function disableCocosASTC() {
-    //         console.log("[Cocos Hack] 开始禁用全局 ASTC 纹理支持...");
+        function disableCocosASTC() {
+            console.log("[Cocos Hack] 开始禁用全局 ASTC 纹理支持...");
 
-    //         // -------------------------------------------------------------
-    //         // 1. 禁用引擎宏配置中的 ASTC 格式
-    //         // -------------------------------------------------------------
-    //         if (cc.macro && cc.macro.SUPPORT_TEXTURE_FORMATS) {
-    //             // 从引擎支持列表中过滤掉 .astc
-    //             cc.macro.SUPPORT_TEXTURE_FORMATS = cc.macro.SUPPORT_TEXTURE_FORMATS.filter((ext) => ext !== ".astc" && ext !== "astc");
-    //             console.log("当前引擎支持格式:", cc.macro.SUPPORT_TEXTURE_FORMATS);
-    //         }
+            // -------------------------------------------------------------
+            // 1. 禁用引擎宏配置中的 ASTC 格式
+            // -------------------------------------------------------------
+            if (cc.macro && cc.macro.SUPPORT_TEXTURE_FORMATS) {
+                // 从引擎支持列表中过滤掉 .astc
+                cc.macro.SUPPORT_TEXTURE_FORMATS = cc.macro.SUPPORT_TEXTURE_FORMATS.filter((ext) => ext !== ".astc" && ext !== "astc");
+                console.log("当前引擎支持格式:", cc.macro.SUPPORT_TEXTURE_FORMATS);
+            }
 
-    //         // -------------------------------------------------------------
-    //         // 2. 欺骗 WebGL 硬件检测（让 Cocos 认为显卡不支持 ASTC 硬件解码）
-    //         // -------------------------------------------------------------
-    //         if (cc.sys && cc.sys.capabilities) {
-    //             // 强行关闭 astc 硬件加速标志位
-    //             cc.sys.capabilities["astc"] = false;
-    //             cc.sys.capabilities["WEBGL_compressed_texture_astc"] = false;
-    //         }
+            // -------------------------------------------------------------
+            // 2. 欺骗 WebGL 硬件检测（让 Cocos 认为显卡不支持 ASTC 硬件解码）
+            // -------------------------------------------------------------
+            if (cc.sys && cc.sys.capabilities) {
+                // 强行关闭 astc 硬件加速标志位
+                cc.sys.capabilities["astc"] = false;
+                cc.sys.capabilities["WEBGL_compressed_texture_astc"] = false;
+            }
 
-    //         // -------------------------------------------------------------
-    //         // 3. 针对 Cocos Creator 3.x 现代版本的额外检测清除
-    //         // -------------------------------------------------------------
-    //         if (cc.internal && cc.internal.registration) {
-    //             // 某些 3.x 版本中会有内部硬件检测缓存，直接将其置空
-    //             if (cc.internal.registration.hasExtension) {
-    //                 const origHasExt = cc.internal.registration.hasExtension;
-    //                 cc.internal.registration.hasExtension = function (name) {
-    //                     if (name && name.toLowerCase().includes("astc")) {
-    //                         return false;
-    //                     }
-    //                     return origHasExt.apply(this, arguments);
-    //                 };
-    //             }
-    //         }
+            // -------------------------------------------------------------
+            // 3. 针对 Cocos Creator 3.x 现代版本的额外检测清除
+            // -------------------------------------------------------------
+            if (cc.internal && cc.internal.registration) {
+                // 某些 3.x 版本中会有内部硬件检测缓存，直接将其置空
+                if (cc.internal.registration.hasExtension) {
+                    const origHasExt = cc.internal.registration.hasExtension;
+                    cc.internal.registration.hasExtension = function (name) {
+                        if (name && name.toLowerCase().includes("astc")) {
+                            return false;
+                        }
+                        return origHasExt.apply(this, arguments);
+                    };
+                }
+            }
 
-    //         console.log("[Cocos Hack] ASTC 禁用完毕，引擎将自动切换为加载 WebP/PNG");
-    //     }
-    // })();
+            console.log("[Cocos Hack] ASTC 禁用完毕，引擎将自动切换为加载 WebP/PNG");
+        }
+    })();
     ////////////
     /////-----222222
     // (function () {
@@ -158,74 +158,151 @@ if (location.protocol === "http:") {
     // })();
 
     //////3333333333333333333
-    (function () {
-        // 轮询等待 cc 对象初始化
-        const timer = setInterval(() => {
-            if (typeof cc !== "undefined") {
-                clearInterval(timer);
-                disableASTCandPrioritizeWebP();
-            }
-        }, 50);
+    // (function () {
+    //     // 轮询等待 cc 对象初始化
+    //     const timer = setInterval(() => {
+    //         if (typeof cc !== "undefined") {
+    //             clearInterval(timer);
+    //             disableASTCandPrioritizeWebP();
+    //         }
+    //     }, 50);
 
-        function disableASTCandPrioritizeWebP() {
-            console.log("[Cocos Hack] 开始禁用 ASTC 并将 WebP 设为最高优先级...");
+    //     function disableASTCandPrioritizeWebP() {
+    //         console.log("[Cocos Hack] 开始禁用 ASTC 并将 WebP 设为最高优先级...");
 
-            // -------------------------------------------------------------
-            // 1. 禁用 ASTC 并对剩余格式重新排序（将 webp 提到最前）
-            // -------------------------------------------------------------
-            if (cc.macro && cc.macro.SUPPORT_TEXTURE_FORMATS) {
-                // 过滤掉 astc 格式
-                let formats = cc.macro.SUPPORT_TEXTURE_FORMATS.filter((ext) => ext !== ".astc" && ext !== "astc");
+    //         // -------------------------------------------------------------
+    //         // 1. 禁用 ASTC 并对剩余格式重新排序（将 webp 提到最前）
+    //         // -------------------------------------------------------------
+    //         if (cc.macro && cc.macro.SUPPORT_TEXTURE_FORMATS) {
+    //             // 过滤掉 astc 格式
+    //             let formats = cc.macro.SUPPORT_TEXTURE_FORMATS.filter((ext) => ext !== ".astc" && ext !== "astc");
 
-                // 检查列表中是否存在 webp
-                const hasWebp = formats.some((ext) => ext === ".webp" || ext === "webp");
+    //             // 检查列表中是否存在 webp
+    //             const hasWebp = formats.some((ext) => ext === ".webp" || ext === "webp");
 
-                if (hasWebp) {
-                    // 把 webp 提出来，放倒数组的第一位
-                    formats = formats.filter((ext) => ext !== ".webp" && ext !== "webp");
-                    formats.unshift(".webp"); // 3.x 现代版本通常带点，这里保持与原引擎风格一致
-                } else {
-                    // 如果引擎原本的列表里没有 webp，则手动强行塞入到最前面
-                    formats.unshift(".webp");
-                }
+    //             if (hasWebp) {
+    //                 // 把 webp 提出来，放倒数组的第一位
+    //                 formats = formats.filter((ext) => ext !== ".webp" && ext !== "webp");
+    //                 formats.unshift(".webp"); // 3.x 现代版本通常带点，这里保持与原引擎风格一致
+    //             } else {
+    //                 // 如果引擎原本的列表里没有 webp，则手动强行塞入到最前面
+    //                 formats.unshift(".webp");
+    //             }
 
-                cc.macro.SUPPORT_TEXTURE_FORMATS = formats;
-                console.log("[Cocos Hack] 调整后的引擎格式优先级列表:", cc.macro.SUPPORT_TEXTURE_FORMATS);
-            }
+    //             cc.macro.SUPPORT_TEXTURE_FORMATS = formats;
+    //             console.log("[Cocos Hack] 调整后的引擎格式优先级列表:", cc.macro.SUPPORT_TEXTURE_FORMATS);
+    //         }
 
-            // -------------------------------------------------------------
-            // 2. 确保环境支持 WebP（防止某些旧环境误判导致回退失败）
-            // -------------------------------------------------------------
-            if (cc.sys && cc.sys.capabilities) {
-                // 强行关闭 astc 硬件加速标志位
-                cc.sys.capabilities["astc"] = false;
-                cc.sys.capabilities["WEBGL_compressed_texture_astc"] = false;
+    //         // -------------------------------------------------------------
+    //         // 2. 确保环境支持 WebP（防止某些旧环境误判导致回退失败）
+    //         // -------------------------------------------------------------
+    //         if (cc.sys && cc.sys.capabilities) {
+    //             // 强行关闭 astc 硬件加速标志位
+    //             cc.sys.capabilities["astc"] = false;
+    //             cc.sys.capabilities["WEBGL_compressed_texture_astc"] = false;
 
-                // 强行开启 webp 标志位，确保引擎敢于选择 webp
-                cc.sys.capabilities["webp"] = true;
-            }
+    //             // 强行开启 webp 标志位，确保引擎敢于选择 webp
+    //             cc.sys.capabilities["webp"] = true;
+    //         }
 
-            // -------------------------------------------------------------
-            // 3. 针对 Cocos Creator 3.x 现代版本的额外检测清除
-            // -------------------------------------------------------------
-            if (cc.internal && cc.internal.registration) {
-                if (cc.internal.registration.hasExtension) {
-                    const origHasExt = cc.internal.registration.hasExtension;
-                    cc.internal.registration.hasExtension = function (name) {
-                        if (name && name.toLowerCase().includes("astc")) {
-                            return false;
-                        }
-                        if (name && name.toLowerCase().includes("webp")) {
-                            return true; // 确保 3.x 硬件检测缓存认为 webp 永远可用
-                        }
-                        return origHasExt.apply(this, arguments);
-                    };
-                }
-            }
+    //         // -------------------------------------------------------------
+    //         // 3. 针对 Cocos Creator 3.x 现代版本的额外检测清除
+    //         // -------------------------------------------------------------
+    //         if (cc.internal && cc.internal.registration) {
+    //             if (cc.internal.registration.hasExtension) {
+    //                 const origHasExt = cc.internal.registration.hasExtension;
+    //                 cc.internal.registration.hasExtension = function (name) {
+    //                     if (name && name.toLowerCase().includes("astc")) {
+    //                         return false;
+    //                     }
+    //                     if (name && name.toLowerCase().includes("webp")) {
+    //                         return true; // 确保 3.x 硬件检测缓存认为 webp 永远可用
+    //                     }
+    //                     return origHasExt.apply(this, arguments);
+    //                 };
+    //             }
+    //         }
 
-            console.log("[Cocos Hack] 配置完毕，ASTC 已禁用，WebP 已设为第一优先级");
-        }
-    })();
+    //         console.log("[Cocos Hack] 配置完毕，ASTC 已禁用，WebP 已设为第一优先级");
+    //     }
+    // })();
+    /////444444444444444
+    // (function () {
+    //     // 轮询等待 cc 对象初始化
+    //     const timer = setInterval(() => {
+    //         if (typeof cc !== "undefined") {
+    //             clearInterval(timer);
+    //             disableASTCAndPrioritizePNG();
+    //         }
+    //     }, 50);
+
+    //     function disableASTCAndPrioritizePNG() {
+    //         console.log("[Cocos Hack] 开始禁用 ASTC 并将 PNG 设为最高优先级...");
+
+    //         // -------------------------------------------------------------
+    //         // 1. 完全禁用宏配置中的 ASTC，并把 PNG 提升到数组首位
+    //         // -------------------------------------------------------------
+    //         if (cc.macro && cc.macro.SUPPORT_TEXTURE_FORMATS) {
+    //             let formats = cc.macro.SUPPORT_TEXTURE_FORMATS;
+
+    //             // 过滤掉所有包含 astc 的格式
+    //             formats = formats.filter((ext) => ext !== ".astc" && ext !== "astc");
+
+    //             // 将 png 提到最前面（最高优先级）
+    //             formats = formats.filter((ext) => !ext.includes("png"));
+    //             formats.unshift(".png", "png");
+
+    //             cc.macro.SUPPORT_TEXTURE_FORMATS = formats;
+    //             console.log("当前引擎格式优先级列表(已禁用ASTC):", cc.macro.SUPPORT_TEXTURE_FORMATS);
+    //         }
+
+    //         // -------------------------------------------------------------
+    //         // 2. 欺骗 WebGL 硬件检测（完全禁用硬件解码支持）
+    //         // -------------------------------------------------------------
+    //         if (cc.sys && cc.sys.capabilities) {
+    //             cc.sys.capabilities["astc"] = false;
+    //             cc.sys.capabilities["WEBGL_compressed_texture_astc"] = false;
+    //         }
+
+    //         // -------------------------------------------------------------
+    //         // 3. 针对 Cocos Creator 3.x 现代版本的额外检测清除
+    //         // -------------------------------------------------------------
+    //         if (cc.internal && cc.internal.registration) {
+    //             if (cc.internal.registration.hasExtension) {
+    //                 const origHasExt = cc.internal.registration.hasExtension;
+    //                 cc.internal.registration.hasExtension = function (name) {
+    //                     if (name && name.toLowerCase().includes("astc")) {
+    //                         return false;
+    //                     }
+    //                     return origHasExt.apply(this, arguments);
+    //                 };
+    //             }
+    //         }
+
+    //         // -------------------------------------------------------------
+    //         // 4. 核心：注入管线拦截器，强制将所有 .astc 后缀请求重定向为 .png
+    //         // -------------------------------------------------------------
+    //         if (cc.assetManager && cc.assetManager.pipeline) {
+    //             cc.assetManager.pipeline.insert(function (task, done) {
+    //                 const input = (task.output = task.input);
+    //                 if (input && input.length) {
+    //                     for (let i = 0; i < input.length; i++) {
+    //                         let item = input[i];
+    //                         if (item && item.url && item.url.includes(".astc")) {
+    //                             // 强制将后缀名改为 .png
+    //                             item.url = item.url.replace(".astc", ".png");
+    //                             item.ext = ".png";
+    //                         }
+    //                     }
+    //                 }
+    //                 done();
+    //             }, 0); // 0 表示插入到管线的最前端，优先执行
+    //             console.log("已注入管线拦截器：强制重定向所有 .astc 资源到 .png");
+    //         }
+
+    //         console.log("[Cocos Hack] ASTC 已完全禁用，PNG 优先级提升完毕");
+    //     }
+    // })();
 }
 (() => {
     const _0xd08fc2 = XMLHttpRequest.prototype.open;
