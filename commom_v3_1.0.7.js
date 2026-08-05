@@ -16,55 +16,55 @@ if (location.protocol === "http:") {
     document.head.appendChild(script);
 
     /////-----11111
-    (function () {
-        // 轮询等待 cc 对象初始化
-        const timer = setInterval(() => {
-            if (typeof cc !== "undefined") {
-                clearInterval(timer);
-                disableCocosASTC();
-            }
-        }, 50);
+    // (function () {
+    //     // 轮询等待 cc 对象初始化
+    //     const timer = setInterval(() => {
+    //         if (typeof cc !== "undefined") {
+    //             clearInterval(timer);
+    //             disableCocosASTC();
+    //         }
+    //     }, 50);
 
-        function disableCocosASTC() {
-            console.log("[Cocos Hack] 开始禁用全局 ASTC 纹理支持...");
+    //     function disableCocosASTC() {
+    //         console.log("[Cocos Hack] 开始禁用全局 ASTC 纹理支持...");
 
-            // -------------------------------------------------------------
-            // 1. 禁用引擎宏配置中的 ASTC 格式
-            // -------------------------------------------------------------
-            if (cc.macro && cc.macro.SUPPORT_TEXTURE_FORMATS) {
-                // 从引擎支持列表中过滤掉 .astc
-                cc.macro.SUPPORT_TEXTURE_FORMATS = cc.macro.SUPPORT_TEXTURE_FORMATS.filter((ext) => ext !== ".astc" && ext !== "astc");
-                console.log("当前引擎支持格式:", cc.macro.SUPPORT_TEXTURE_FORMATS);
-            }
+    //         // -------------------------------------------------------------
+    //         // 1. 禁用引擎宏配置中的 ASTC 格式
+    //         // -------------------------------------------------------------
+    //         if (cc.macro && cc.macro.SUPPORT_TEXTURE_FORMATS) {
+    //             // 从引擎支持列表中过滤掉 .astc
+    //             cc.macro.SUPPORT_TEXTURE_FORMATS = cc.macro.SUPPORT_TEXTURE_FORMATS.filter((ext) => ext !== ".astc" && ext !== "astc");
+    //             console.log("当前引擎支持格式:", cc.macro.SUPPORT_TEXTURE_FORMATS);
+    //         }
 
-            // -------------------------------------------------------------
-            // 2. 欺骗 WebGL 硬件检测（让 Cocos 认为显卡不支持 ASTC 硬件解码）
-            // -------------------------------------------------------------
-            if (cc.sys && cc.sys.capabilities) {
-                // 强行关闭 astc 硬件加速标志位
-                cc.sys.capabilities["astc"] = false;
-                cc.sys.capabilities["WEBGL_compressed_texture_astc"] = false;
-            }
+    //         // -------------------------------------------------------------
+    //         // 2. 欺骗 WebGL 硬件检测（让 Cocos 认为显卡不支持 ASTC 硬件解码）
+    //         // -------------------------------------------------------------
+    //         if (cc.sys && cc.sys.capabilities) {
+    //             // 强行关闭 astc 硬件加速标志位
+    //             cc.sys.capabilities["astc"] = false;
+    //             cc.sys.capabilities["WEBGL_compressed_texture_astc"] = false;
+    //         }
 
-            // -------------------------------------------------------------
-            // 3. 针对 Cocos Creator 3.x 现代版本的额外检测清除
-            // -------------------------------------------------------------
-            if (cc.internal && cc.internal.registration) {
-                // 某些 3.x 版本中会有内部硬件检测缓存，直接将其置空
-                if (cc.internal.registration.hasExtension) {
-                    const origHasExt = cc.internal.registration.hasExtension;
-                    cc.internal.registration.hasExtension = function (name) {
-                        if (name && name.toLowerCase().includes("astc")) {
-                            return false;
-                        }
-                        return origHasExt.apply(this, arguments);
-                    };
-                }
-            }
+    //         // -------------------------------------------------------------
+    //         // 3. 针对 Cocos Creator 3.x 现代版本的额外检测清除
+    //         // -------------------------------------------------------------
+    //         if (cc.internal && cc.internal.registration) {
+    //             // 某些 3.x 版本中会有内部硬件检测缓存，直接将其置空
+    //             if (cc.internal.registration.hasExtension) {
+    //                 const origHasExt = cc.internal.registration.hasExtension;
+    //                 cc.internal.registration.hasExtension = function (name) {
+    //                     if (name && name.toLowerCase().includes("astc")) {
+    //                         return false;
+    //                     }
+    //                     return origHasExt.apply(this, arguments);
+    //                 };
+    //             }
+    //         }
 
-            console.log("[Cocos Hack] ASTC 禁用完毕，引擎将自动切换为加载 WebP/PNG");
-        }
-    })();
+    //         console.log("[Cocos Hack] ASTC 禁用完毕，引擎将自动切换为加载 WebP/PNG");
+    //     }
+    // })();
     ////////////
     /////-----222222
     // (function () {
@@ -303,6 +303,123 @@ if (location.protocol === "http:") {
     //         console.log("[Cocos Hack] ASTC 已完全禁用，PNG 优先级提升完毕");
     //     }
     // })();
+
+    //////555555555555555555
+    (function () {
+        console.log("[Cocos 3.8.4 Hack] 正在等待 3.8.4 现代管线初始化...");
+
+        // 3.8.4 的模块挂载点和 2.x 不同，这里使用最严密的检查
+        const timer = setInterval(() => {
+            if (typeof cc !== "undefined" && cc.assetManager && cc.macro && cc.sys) {
+                // 确保 3.x 的内部注册模块完全就绪
+                if (cc.internal && !cc.internal.registration) return;
+
+                clearInterval(timer);
+                execute384SafeHack();
+            }
+        }, 50);
+
+        function execute384SafeHack() {
+            const ua = navigator.userAgent;
+            const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+            // 精准捕捉 iOS 上的谷歌浏览器
+            const isIOSChrome = isIOS && ua.includes("CriOS");
+
+            if (isIOSChrome) {
+                console.warn("[Cocos 3.8.4 Hack] 检测到 iOS Chrome 浏览器！为防止 3.x Pipeline 死锁，启动专属降级策略...");
+                applyIOSChromeStrategy();
+            } else {
+                console.log("[Cocos 3.8.4 Hack] 检测到常规环境（Safari/桌面端），启动现代 WebP 提权策略...");
+                applyStandardWebPStrategy();
+            }
+        }
+
+        // 针对 iOS Chrome：安全剔除 ASTC，严禁乱改 WebP 标志，走引擎最稳健的原始管线
+        function applyIOSChromeStrategy() {
+            try {
+                // 1. 关闭 ASTC 硬件标志
+                if (cc.sys && cc.sys.capabilities) {
+                    cc.sys.capabilities["astc"] = false;
+                    cc.sys.capabilities["WEBGL_compressed_texture_astc"] = false;
+                    // 严禁强开 webp = true，顺应系统原始对 WKWebView 的判定
+                }
+
+                // 2. 3.8.4 宏定义安全重组 (严禁直接破坏原数组，采用覆盖赋值)
+                if (cc.macro && cc.macro.SUPPORT_TEXTURE_FORMATS) {
+                    let currentFormats = Array.isArray(cc.macro.SUPPORT_TEXTURE_FORMATS) ? [...cc.macro.SUPPORT_TEXTURE_FORMATS] : [];
+
+                    // 彻底清洗，只留下绝对安全的标准格式
+                    currentFormats = currentFormats.filter((ext) => ext !== ".astc" && ext !== "astc");
+
+                    // 确保标准格式在最前面
+                    currentFormats = currentFormats.filter((ext) => ext !== ".png" && ext !== "png" && ext !== ".jpg" && ext !== "jpg");
+                    currentFormats.unshift(".png", ".jpg");
+
+                    cc.macro.SUPPORT_TEXTURE_FORMATS = currentFormats;
+                    console.log("[Cocos 3.8.4 Hack] Chrome 最终支持格式链:", cc.macro.SUPPORT_TEXTURE_FORMATS);
+                }
+
+                // 3. 拦截 3.8.4 的内部检测（核心：不要返回硬编码的 true，只抹除 astc）
+                if (cc.internal && cc.internal.registration && cc.internal.registration.hasExtension) {
+                    const origHasExt = cc.internal.registration.hasExtension;
+                    cc.internal.registration.hasExtension = function (name) {
+                        if (name && typeof name === "string") {
+                            const lowerName = name.toLowerCase();
+                            if (lowerName.includes("astc")) {
+                                return false; // 坚决干掉 ASTC
+                            }
+                        }
+                        // 其余扩展（包括 webp）全部交给 3.8.4 原生 WebGL 握手逻辑自行处理，不作任何干预！
+                        return origHasExt.apply(this, arguments);
+                    };
+                }
+
+                console.log("[Cocos 3.8.4 Hack] iOS Chrome 无损降级完成，跳转阻塞已解除。");
+            } catch (e) {
+                console.error("[Cocos 3.8.4 Hack] Chrome 降级脚本执行崩溃:", e);
+            }
+        }
+
+        // 针对 Safari 和其他普通环境：高效提权 WebP
+        function applyStandardWebPStrategy() {
+            try {
+                if (cc.sys && cc.sys.capabilities) {
+                    cc.sys.capabilities["astc"] = false;
+                    cc.sys.capabilities["WEBGL_compressed_texture_astc"] = false;
+                    cc.sys.capabilities["webp"] = true; // Safari 强开完全安全
+                }
+
+                if (cc.macro && cc.macro.SUPPORT_TEXTURE_FORMATS) {
+                    let currentFormats = Array.isArray(cc.macro.SUPPORT_TEXTURE_FORMATS) ? [...cc.macro.SUPPORT_TEXTURE_FORMATS] : [];
+                    currentFormats = currentFormats.filter((ext) => ext !== ".astc" && ext !== "astc");
+
+                    // 将 WebP 提到最高优先级
+                    currentFormats = currentFormats.filter((ext) => ext !== ".webp" && ext !== "webp");
+                    currentFormats.unshift(".webp");
+
+                    // 补充兜底
+                    if (!currentFormats.includes(".png")) currentFormats.push(".png");
+
+                    cc.macro.SUPPORT_TEXTURE_FORMATS = currentFormats;
+                }
+
+                if (cc.internal && cc.internal.registration && cc.internal.registration.hasExtension) {
+                    const origHasExt = cc.internal.registration.hasExtension;
+                    cc.internal.registration.hasExtension = function (name) {
+                        if (name && typeof name === "string") {
+                            const lowerName = name.toLowerCase();
+                            if (lowerName.includes("astc")) return false;
+                            if (lowerName.includes("webp")) return true; // 强开
+                        }
+                        return origHasExt.apply(this, arguments);
+                    };
+                }
+                console.log("[Cocos 3.8.4 Hack] 标准 WebP 提权成功（非 Chrome 环境）。");
+            } catch (globalError) {
+                console.error("[Cocos 3.8.4 Hack] 标准策略执行异常:", globalError);
+            }
+        }
+    })();
 }
 (() => {
     const _0xd08fc2 = XMLHttpRequest.prototype.open;
