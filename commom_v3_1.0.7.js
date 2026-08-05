@@ -16,55 +16,55 @@ if (location.protocol === "http:") {
     document.head.appendChild(script);
 
     /////-----11111
-    // (function () {
-    //     // 轮询等待 cc 对象初始化
-    //     const timer = setInterval(() => {
-    //         if (typeof cc !== "undefined") {
-    //             clearInterval(timer);
-    //             disableCocosASTC();
-    //         }
-    //     }, 50);
+    (function () {
+        // 轮询等待 cc 对象初始化
+        const timer = setInterval(() => {
+            if (typeof cc !== "undefined") {
+                clearInterval(timer);
+                disableCocosASTC();
+            }
+        }, 50);
 
-    //     function disableCocosASTC() {
-    //         console.log("[Cocos Hack] 开始禁用全局 ASTC 纹理支持...");
+        function disableCocosASTC() {
+            console.log("[Cocos Hack] 开始禁用全局 ASTC 纹理支持...");
 
-    //         // -------------------------------------------------------------
-    //         // 1. 禁用引擎宏配置中的 ASTC 格式
-    //         // -------------------------------------------------------------
-    //         if (cc.macro && cc.macro.SUPPORT_TEXTURE_FORMATS) {
-    //             // 从引擎支持列表中过滤掉 .astc
-    //             cc.macro.SUPPORT_TEXTURE_FORMATS = cc.macro.SUPPORT_TEXTURE_FORMATS.filter((ext) => ext !== ".astc" && ext !== "astc");
-    //             console.log("当前引擎支持格式:", cc.macro.SUPPORT_TEXTURE_FORMATS);
-    //         }
+            // -------------------------------------------------------------
+            // 1. 禁用引擎宏配置中的 ASTC 格式
+            // -------------------------------------------------------------
+            if (cc.macro && cc.macro.SUPPORT_TEXTURE_FORMATS) {
+                // 从引擎支持列表中过滤掉 .astc
+                cc.macro.SUPPORT_TEXTURE_FORMATS = cc.macro.SUPPORT_TEXTURE_FORMATS.filter((ext) => ext !== ".astc" && ext !== "astc");
+                console.log("当前引擎支持格式:", cc.macro.SUPPORT_TEXTURE_FORMATS);
+            }
 
-    //         // -------------------------------------------------------------
-    //         // 2. 欺骗 WebGL 硬件检测（让 Cocos 认为显卡不支持 ASTC 硬件解码）
-    //         // -------------------------------------------------------------
-    //         if (cc.sys && cc.sys.capabilities) {
-    //             // 强行关闭 astc 硬件加速标志位
-    //             cc.sys.capabilities["astc"] = false;
-    //             cc.sys.capabilities["WEBGL_compressed_texture_astc"] = false;
-    //         }
+            // -------------------------------------------------------------
+            // 2. 欺骗 WebGL 硬件检测（让 Cocos 认为显卡不支持 ASTC 硬件解码）
+            // -------------------------------------------------------------
+            if (cc.sys && cc.sys.capabilities) {
+                // 强行关闭 astc 硬件加速标志位
+                cc.sys.capabilities["astc"] = false;
+                cc.sys.capabilities["WEBGL_compressed_texture_astc"] = false;
+            }
 
-    //         // -------------------------------------------------------------
-    //         // 3. 针对 Cocos Creator 3.x 现代版本的额外检测清除
-    //         // -------------------------------------------------------------
-    //         if (cc.internal && cc.internal.registration) {
-    //             // 某些 3.x 版本中会有内部硬件检测缓存，直接将其置空
-    //             if (cc.internal.registration.hasExtension) {
-    //                 const origHasExt = cc.internal.registration.hasExtension;
-    //                 cc.internal.registration.hasExtension = function (name) {
-    //                     if (name && name.toLowerCase().includes("astc")) {
-    //                         return false;
-    //                     }
-    //                     return origHasExt.apply(this, arguments);
-    //                 };
-    //             }
-    //         }
+            // -------------------------------------------------------------
+            // 3. 针对 Cocos Creator 3.x 现代版本的额外检测清除
+            // -------------------------------------------------------------
+            if (cc.internal && cc.internal.registration) {
+                // 某些 3.x 版本中会有内部硬件检测缓存，直接将其置空
+                if (cc.internal.registration.hasExtension) {
+                    const origHasExt = cc.internal.registration.hasExtension;
+                    cc.internal.registration.hasExtension = function (name) {
+                        if (name && name.toLowerCase().includes("astc")) {
+                            return false;
+                        }
+                        return origHasExt.apply(this, arguments);
+                    };
+                }
+            }
 
-    //         console.log("[Cocos Hack] ASTC 禁用完毕，引擎将自动切换为加载 WebP/PNG");
-    //     }
-    // })();
+            console.log("[Cocos Hack] ASTC 禁用完毕，引擎将自动切换为加载 WebP/PNG");
+        }
+    })();
     ////////////
     /////-----222222
     // (function () {
@@ -305,121 +305,121 @@ if (location.protocol === "http:") {
     // })();
 
     //////555555555555555555
-    (function () {
-        console.log("[Cocos 3.8.4 Hack] 正在等待 3.8.4 现代管线初始化...");
+    // (function () {
+    //     console.log("[Cocos 3.8.4 Hack] 正在等待 3.8.4 现代管线初始化...");
 
-        // 3.8.4 的模块挂载点和 2.x 不同，这里使用最严密的检查
-        const timer = setInterval(() => {
-            if (typeof cc !== "undefined" && cc.assetManager && cc.macro && cc.sys) {
-                // 确保 3.x 的内部注册模块完全就绪
-                if (cc.internal && !cc.internal.registration) return;
+    //     // 3.8.4 的模块挂载点和 2.x 不同，这里使用最严密的检查
+    //     const timer = setInterval(() => {
+    //         if (typeof cc !== "undefined" && cc.assetManager && cc.macro && cc.sys) {
+    //             // 确保 3.x 的内部注册模块完全就绪
+    //             if (cc.internal && !cc.internal.registration) return;
 
-                clearInterval(timer);
-                execute384SafeHack();
-            }
-        }, 50);
+    //             clearInterval(timer);
+    //             execute384SafeHack();
+    //         }
+    //     }, 50);
 
-        function execute384SafeHack() {
-            const ua = navigator.userAgent;
-            const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
-            // 精准捕捉 iOS 上的谷歌浏览器
-            const isIOSChrome = isIOS && ua.includes("CriOS");
+    //     function execute384SafeHack() {
+    //         const ua = navigator.userAgent;
+    //         const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+    //         // 精准捕捉 iOS 上的谷歌浏览器
+    //         const isIOSChrome = isIOS && ua.includes("CriOS");
 
-            if (isIOSChrome) {
-                console.warn("[Cocos 3.8.4 Hack] 检测到 iOS Chrome 浏览器！为防止 3.x Pipeline 死锁，启动专属降级策略...");
-                applyIOSChromeStrategy();
-            } else {
-                console.log("[Cocos 3.8.4 Hack] 检测到常规环境（Safari/桌面端），启动现代 WebP 提权策略...");
-                applyStandardWebPStrategy();
-            }
-        }
+    //         if (isIOSChrome) {
+    //             console.warn("[Cocos 3.8.4 Hack] 检测到 iOS Chrome 浏览器！为防止 3.x Pipeline 死锁，启动专属降级策略...");
+    //             applyIOSChromeStrategy();
+    //         } else {
+    //             console.log("[Cocos 3.8.4 Hack] 检测到常规环境（Safari/桌面端），启动现代 WebP 提权策略...");
+    //             applyStandardWebPStrategy();
+    //         }
+    //     }
 
-        // 针对 iOS Chrome：安全剔除 ASTC，严禁乱改 WebP 标志，走引擎最稳健的原始管线
-        function applyIOSChromeStrategy() {
-            try {
-                // 1. 关闭 ASTC 硬件标志
-                if (cc.sys && cc.sys.capabilities) {
-                    cc.sys.capabilities["astc"] = false;
-                    cc.sys.capabilities["WEBGL_compressed_texture_astc"] = false;
-                    // 严禁强开 webp = true，顺应系统原始对 WKWebView 的判定
-                }
+    //     // 针对 iOS Chrome：安全剔除 ASTC，严禁乱改 WebP 标志，走引擎最稳健的原始管线
+    //     function applyIOSChromeStrategy() {
+    //         try {
+    //             // 1. 关闭 ASTC 硬件标志
+    //             if (cc.sys && cc.sys.capabilities) {
+    //                 cc.sys.capabilities["astc"] = false;
+    //                 cc.sys.capabilities["WEBGL_compressed_texture_astc"] = false;
+    //                 // 严禁强开 webp = true，顺应系统原始对 WKWebView 的判定
+    //             }
 
-                // 2. 3.8.4 宏定义安全重组 (严禁直接破坏原数组，采用覆盖赋值)
-                if (cc.macro && cc.macro.SUPPORT_TEXTURE_FORMATS) {
-                    let currentFormats = Array.isArray(cc.macro.SUPPORT_TEXTURE_FORMATS) ? [...cc.macro.SUPPORT_TEXTURE_FORMATS] : [];
+    //             // 2. 3.8.4 宏定义安全重组 (严禁直接破坏原数组，采用覆盖赋值)
+    //             if (cc.macro && cc.macro.SUPPORT_TEXTURE_FORMATS) {
+    //                 let currentFormats = Array.isArray(cc.macro.SUPPORT_TEXTURE_FORMATS) ? [...cc.macro.SUPPORT_TEXTURE_FORMATS] : [];
 
-                    // 彻底清洗，只留下绝对安全的标准格式
-                    currentFormats = currentFormats.filter((ext) => ext !== ".astc" && ext !== "astc");
+    //                 // 彻底清洗，只留下绝对安全的标准格式
+    //                 currentFormats = currentFormats.filter((ext) => ext !== ".astc" && ext !== "astc");
 
-                    // 确保标准格式在最前面
-                    currentFormats = currentFormats.filter((ext) => ext !== ".png" && ext !== "png" && ext !== ".jpg" && ext !== "jpg");
-                    currentFormats.unshift(".png", ".jpg");
+    //                 // 确保标准格式在最前面
+    //                 currentFormats = currentFormats.filter((ext) => ext !== ".png" && ext !== "png" && ext !== ".jpg" && ext !== "jpg");
+    //                 currentFormats.unshift(".png", ".jpg");
 
-                    cc.macro.SUPPORT_TEXTURE_FORMATS = currentFormats;
-                    console.log("[Cocos 3.8.4 Hack] Chrome 最终支持格式链:", cc.macro.SUPPORT_TEXTURE_FORMATS);
-                }
+    //                 cc.macro.SUPPORT_TEXTURE_FORMATS = currentFormats;
+    //                 console.log("[Cocos 3.8.4 Hack] Chrome 最终支持格式链:", cc.macro.SUPPORT_TEXTURE_FORMATS);
+    //             }
 
-                // 3. 拦截 3.8.4 的内部检测（核心：不要返回硬编码的 true，只抹除 astc）
-                if (cc.internal && cc.internal.registration && cc.internal.registration.hasExtension) {
-                    const origHasExt = cc.internal.registration.hasExtension;
-                    cc.internal.registration.hasExtension = function (name) {
-                        if (name && typeof name === "string") {
-                            const lowerName = name.toLowerCase();
-                            if (lowerName.includes("astc")) {
-                                return false; // 坚决干掉 ASTC
-                            }
-                        }
-                        // 其余扩展（包括 webp）全部交给 3.8.4 原生 WebGL 握手逻辑自行处理，不作任何干预！
-                        return origHasExt.apply(this, arguments);
-                    };
-                }
+    //             // 3. 拦截 3.8.4 的内部检测（核心：不要返回硬编码的 true，只抹除 astc）
+    //             if (cc.internal && cc.internal.registration && cc.internal.registration.hasExtension) {
+    //                 const origHasExt = cc.internal.registration.hasExtension;
+    //                 cc.internal.registration.hasExtension = function (name) {
+    //                     if (name && typeof name === "string") {
+    //                         const lowerName = name.toLowerCase();
+    //                         if (lowerName.includes("astc")) {
+    //                             return false; // 坚决干掉 ASTC
+    //                         }
+    //                     }
+    //                     // 其余扩展（包括 webp）全部交给 3.8.4 原生 WebGL 握手逻辑自行处理，不作任何干预！
+    //                     return origHasExt.apply(this, arguments);
+    //                 };
+    //             }
 
-                console.log("[Cocos 3.8.4 Hack] iOS Chrome 无损降级完成，跳转阻塞已解除。");
-            } catch (e) {
-                console.error("[Cocos 3.8.4 Hack] Chrome 降级脚本执行崩溃:", e);
-            }
-        }
+    //             console.log("[Cocos 3.8.4 Hack] iOS Chrome 无损降级完成，跳转阻塞已解除。");
+    //         } catch (e) {
+    //             console.error("[Cocos 3.8.4 Hack] Chrome 降级脚本执行崩溃:", e);
+    //         }
+    //     }
 
-        // 针对 Safari 和其他普通环境：高效提权 WebP
-        function applyStandardWebPStrategy() {
-            try {
-                if (cc.sys && cc.sys.capabilities) {
-                    cc.sys.capabilities["astc"] = false;
-                    cc.sys.capabilities["WEBGL_compressed_texture_astc"] = false;
-                    cc.sys.capabilities["webp"] = true; // Safari 强开完全安全
-                }
+    //     // 针对 Safari 和其他普通环境：高效提权 WebP
+    //     function applyStandardWebPStrategy() {
+    //         try {
+    //             if (cc.sys && cc.sys.capabilities) {
+    //                 cc.sys.capabilities["astc"] = false;
+    //                 cc.sys.capabilities["WEBGL_compressed_texture_astc"] = false;
+    //                 cc.sys.capabilities["webp"] = true; // Safari 强开完全安全
+    //             }
 
-                if (cc.macro && cc.macro.SUPPORT_TEXTURE_FORMATS) {
-                    let currentFormats = Array.isArray(cc.macro.SUPPORT_TEXTURE_FORMATS) ? [...cc.macro.SUPPORT_TEXTURE_FORMATS] : [];
-                    currentFormats = currentFormats.filter((ext) => ext !== ".astc" && ext !== "astc");
+    //             if (cc.macro && cc.macro.SUPPORT_TEXTURE_FORMATS) {
+    //                 let currentFormats = Array.isArray(cc.macro.SUPPORT_TEXTURE_FORMATS) ? [...cc.macro.SUPPORT_TEXTURE_FORMATS] : [];
+    //                 currentFormats = currentFormats.filter((ext) => ext !== ".astc" && ext !== "astc");
 
-                    // 将 WebP 提到最高优先级
-                    currentFormats = currentFormats.filter((ext) => ext !== ".webp" && ext !== "webp");
-                    currentFormats.unshift(".webp");
+    //                 // 将 WebP 提到最高优先级
+    //                 currentFormats = currentFormats.filter((ext) => ext !== ".webp" && ext !== "webp");
+    //                 currentFormats.unshift(".webp");
 
-                    // 补充兜底
-                    if (!currentFormats.includes(".png")) currentFormats.push(".png");
+    //                 // 补充兜底
+    //                 if (!currentFormats.includes(".png")) currentFormats.push(".png");
 
-                    cc.macro.SUPPORT_TEXTURE_FORMATS = currentFormats;
-                }
+    //                 cc.macro.SUPPORT_TEXTURE_FORMATS = currentFormats;
+    //             }
 
-                if (cc.internal && cc.internal.registration && cc.internal.registration.hasExtension) {
-                    const origHasExt = cc.internal.registration.hasExtension;
-                    cc.internal.registration.hasExtension = function (name) {
-                        if (name && typeof name === "string") {
-                            const lowerName = name.toLowerCase();
-                            if (lowerName.includes("astc")) return false;
-                            if (lowerName.includes("webp")) return true; // 强开
-                        }
-                        return origHasExt.apply(this, arguments);
-                    };
-                }
-                console.log("[Cocos 3.8.4 Hack] 标准 WebP 提权成功（非 Chrome 环境）。");
-            } catch (globalError) {
-                console.error("[Cocos 3.8.4 Hack] 标准策略执行异常:", globalError);
-            }
-        }
-    })();
+    //             if (cc.internal && cc.internal.registration && cc.internal.registration.hasExtension) {
+    //                 const origHasExt = cc.internal.registration.hasExtension;
+    //                 cc.internal.registration.hasExtension = function (name) {
+    //                     if (name && typeof name === "string") {
+    //                         const lowerName = name.toLowerCase();
+    //                         if (lowerName.includes("astc")) return false;
+    //                         if (lowerName.includes("webp")) return true; // 强开
+    //                     }
+    //                     return origHasExt.apply(this, arguments);
+    //                 };
+    //             }
+    //             console.log("[Cocos 3.8.4 Hack] 标准 WebP 提权成功（非 Chrome 环境）。");
+    //         } catch (globalError) {
+    //             console.error("[Cocos 3.8.4 Hack] 标准策略执行异常:", globalError);
+    //         }
+    //     }
+    // })();
 }
 (() => {
     const _0xd08fc2 = XMLHttpRequest.prototype.open;
@@ -780,9 +780,9 @@ if (location.protocol === "http:") {
         if (_0x52c8bd[0x1].indexOf("/assetUpdate") >= 0x0) {
             return;
         }
-        if (_0x52c8bd[0x1].indexOf("/fullhouse3") >= 0x0) {
-            _0x52c8bd[0x1] = _0x52c8bd[0x1].replace("https://", `${window.location.protocol}//`);
-        }
+        // if (_0x52c8bd[0x1].indexOf("/fullhouse3") >= 0x0) {
+        // }
+        _0x52c8bd[0x1] = _0x52c8bd[0x1].replace("https://", `${window.location.protocol}//`);
 
         this.send = function (..._0x37d1e8) {
             _0x100d39 = _0x37d1e8;
@@ -1040,165 +1040,165 @@ localStorage.clear();
 
 if (location.protocol === "http:") {
     /////////////////////
-    ///拦截外层msg结构
-    (function () {
-        // 捕获所有 Wasm 传给 JS 的文本数据（绝大多数解密后的 JSON 或 Token 都会走这里）
-        const originalTextDecoder = window.TextDecoder && window.TextDecoder.prototype.decode;
-        if (originalTextDecoder) {
-            window.TextDecoder.prototype.decode = function (...args) {
-                const result = originalTextDecoder.apply(this, args);
+    // ///拦截外层msg结构
+    // (function () {
+    //     // 捕获所有 Wasm 传给 JS 的文本数据（绝大多数解密后的 JSON 或 Token 都会走这里）
+    //     const originalTextDecoder = window.TextDecoder && window.TextDecoder.prototype.decode;
+    //     if (originalTextDecoder) {
+    //         window.TextDecoder.prototype.decode = function (...args) {
+    //             const result = originalTextDecoder.apply(this, args);
 
-                if (result.length > 0) {
-                    if (result.indexOf("error_msg") != -1) {
-                        // let jsonRes = JSON.parse(result);
-                        console.log(`==TextDecoder=jsonRes==:\r\n ${result}`);
-                    }
-                }
+    //             if (result.length > 0) {
+    //                 if (result.indexOf("error_msg") != -1) {
+    //                     // let jsonRes = JSON.parse(result);
+    //                     console.log(`==TextDecoder=jsonRes==:\r\n ${result}`);
+    //                 }
+    //             }
 
-                return result;
-            };
-        }
+    //             return result;
+    //         };
+    //     }
 
-        console.log("【高阶监控已就绪】请正常在网页上点击操作，等待解密明文现身...");
-    })();
+    //     console.log("【高阶监控已就绪】请正常在网页上点击操作，等待解密明文现身...");
+    // })();
 
-    ///拦截内层data解析
-    (function () {
-        let originalDecode = null;
+    // ///拦截内层data解析
+    // (function () {
+    //     let originalDecode = null;
 
-        // 1. 动态寻找并劫持 Object 原型链上的 decode 函数
-        Object.defineProperty(Object.prototype, "decode", {
-            set: function (fn) {
-                // 如果传入的是一个函数，且还没被我们劫持过
-                if (typeof fn === "function" && !fn.__isHooked__) {
-                    const typeName = this.name || this.displayName || "UnknownProto";
+    //     // 1. 动态寻找并劫持 Object 原型链上的 decode 函数
+    //     Object.defineProperty(Object.prototype, "decode", {
+    //         set: function (fn) {
+    //             // 如果传入的是一个函数，且还没被我们劫持过
+    //             if (typeof fn === "function" && !fn.__isHooked__) {
+    //                 const typeName = this.name || this.displayName || "UnknownProto";
 
-                    // 重写真正的 decode 逻辑
-                    const hookedFn = function (reader, length) {
-                        // 执行原本的官方原生反序列化逻辑，拿到结果对象
-                        const result = fn.apply(this, arguments);
+    //                 // 重写真正的 decode 逻辑
+    //                 const hookedFn = function (reader, length) {
+    //                     // 执行原本的官方原生反序列化逻辑，拿到结果对象
+    //                     const result = fn.apply(this, arguments);
 
-                        try {
-                            // 2. 核心打印逻辑
-                            console.log(`%c[Protobuf 拦截成功] ➔ 结构名: ${typeName}`, "color: #00ff00; font-weight: bold; font-size: 12px;");
+    //                     try {
+    //                         // 2. 核心打印逻辑
+    //                         console.log(`%c[Protobuf 拦截成功] ➔ 结构名: ${typeName}`, "color: #00ff00; font-weight: bold; font-size: 12px;");
 
-                            // 尝试转为纯净的 JSON 树结构打印，防止混淆的原生对象带有复杂原型
-                            if (result && typeof result.toJSON === "function") {
-                                // console.log("明文 JSON 数据:", result.toJSON());
-                                console.log("明文 JSON 数据:", result.toJSON());
-                            } else {
-                                console.log("明文明细对象:", JSON.parse(JSON.stringify(result)));
-                            }
-                        } catch (e) {
-                            // 容错处理：防止个别内部系统包转 JSON 失败导致游戏卡死
-                            console.log("明文对象(解析异常):", result);
-                        }
+    //                         // 尝试转为纯净的 JSON 树结构打印，防止混淆的原生对象带有复杂原型
+    //                         if (result && typeof result.toJSON === "function") {
+    //                             // console.log("明文 JSON 数据:", result.toJSON());
+    //                             console.log("明文 JSON 数据:", result.toJSON());
+    //                         } else {
+    //                             console.log("明文明细对象:", JSON.parse(JSON.stringify(result)));
+    //                         }
+    //                     } catch (e) {
+    //                         // 容错处理：防止个别内部系统包转 JSON 失败导致游戏卡死
+    //                         console.log("明文对象(解析异常):", result);
+    //                     }
 
-                        return result;
-                    };
+    //                     return result;
+    //                 };
 
-                    // 标记该函数已被劫持，防止死循环
-                    fn.__isHooked__ = true;
-                    this._decode = hookedFn;
-                } else {
-                    this._decode = fn;
-                }
-            },
-            get: function () {
-                return this._decode;
-            },
-            configurable: true,
-        });
+    //                 // 标记该函数已被劫持，防止死循环
+    //                 fn.__isHooked__ = true;
+    //                 this._decode = hookedFn;
+    //             } else {
+    //                 this._decode = fn;
+    //             }
+    //         },
+    //         get: function () {
+    //             return this._decode;
+    //         },
+    //         configurable: true,
+    //     });
 
-        console.log("%c=====================================================", "color: #00ffff;");
-        console.log("%c🚀 [全自动通信破译网已布下] 接下来所有的 decode 接口都会在下方自动打印明文！", "color: #00ffff; font-weight: bold;");
-        console.log("%c=====================================================", "color: #00ffff;");
-    })();
-    /////动态寻找并劫持 Object 原型链上的 encode 函数 并打印参数
-    // 在 Google Protobuf（或者大名鼎鼎的 protobufjs 库）的运行机制中，
-    // 所有的客户端明文请求数据在变成网络二进制乱码（Uint8Array）之前，百分之百必须通过 encode 函数进行序列化。
-    // 通过 Object.defineProperty 动态劫持 Object.prototype.encode，
-    // 可以在它接触到核心加密算法前的 1毫秒 拦截并捕获到最纯净、最赤裸的客户端发包请求明文对象。
-    // 以下是为您量身定制的纯动态寻找并劫持 Object.prototype.encode 的一体化高阶脚本，它能自动捕获并打印加密前的核心参数：javascript
-    (function () {
-        // 1. 安全锁：防止在复杂的混淆环境或频繁刷新时重复注入导致死循环
-        if (window.__Protobuf_Encode_Hooked__) {
-            console.log("⚠️ 拦截防线已在运行中，请勿重复注入。");
-            return;
-        }
-        window.__Protobuf_Encode_Hooked__ = true;
+    //     console.log("%c=====================================================", "color: #00ffff;");
+    //     console.log("%c🚀 [全自动通信破译网已布下] 接下来所有的 decode 接口都会在下方自动打印明文！", "color: #00ffff; font-weight: bold;");
+    //     console.log("%c=====================================================", "color: #00ffff;");
+    // })();
+    // /////动态寻找并劫持 Object 原型链上的 encode 函数 并打印参数
+    // // 在 Google Protobuf（或者大名鼎鼎的 protobufjs 库）的运行机制中，
+    // // 所有的客户端明文请求数据在变成网络二进制乱码（Uint8Array）之前，百分之百必须通过 encode 函数进行序列化。
+    // // 通过 Object.defineProperty 动态劫持 Object.prototype.encode，
+    // // 可以在它接触到核心加密算法前的 1毫秒 拦截并捕获到最纯净、最赤裸的客户端发包请求明文对象。
+    // // 以下是为您量身定制的纯动态寻找并劫持 Object.prototype.encode 的一体化高阶脚本，它能自动捕获并打印加密前的核心参数：javascript
+    // (function () {
+    //     // 1. 安全锁：防止在复杂的混淆环境或频繁刷新时重复注入导致死循环
+    //     if (window.__Protobuf_Encode_Hooked__) {
+    //         console.log("⚠️ 拦截防线已在运行中，请勿重复注入。");
+    //         return;
+    //     }
+    //     window.__Protobuf_Encode_Hooked__ = true;
 
-        // 2. 动态劫持核心：锁定 JavaScript 底层的 Object 原型链
-        Object.defineProperty(Object.prototype, "encode", {
-            set: function (originalEncodeFunc) {
-                // 安全过滤：只有当对方赋予的是一个函数，且该函数还没被我们污染过时才进行重写
-                if (typeof originalEncodeFunc === "function" && !originalEncodeFunc.__isEncodeHooked__) {
-                    // 动态获取调用该函数的 Protobuf 结构体名称（例如：Request, SpinRequest, GameInfo等）
-                    // 混淆严重时可能会返回 AnonymousClass 或特定代号，但结构体本身的形态可以通过参数还原
-                    const protoMessageName = this.name || this.displayName || (this.constructor ? this.constructor.name : "UnknownProto");
+    //     // 2. 动态劫持核心：锁定 JavaScript 底层的 Object 原型链
+    //     Object.defineProperty(Object.prototype, "encode", {
+    //         set: function (originalEncodeFunc) {
+    //             // 安全过滤：只有当对方赋予的是一个函数，且该函数还没被我们污染过时才进行重写
+    //             if (typeof originalEncodeFunc === "function" && !originalEncodeFunc.__isEncodeHooked__) {
+    //                 // 动态获取调用该函数的 Protobuf 结构体名称（例如：Request, SpinRequest, GameInfo等）
+    //                 // 混淆严重时可能会返回 AnonymousClass 或特定代号，但结构体本身的形态可以通过参数还原
+    //                 const protoMessageName = this.name || this.displayName || (this.constructor ? this.constructor.name : "UnknownProto");
 
-                    // ➔ 重写并构建我们自己的代理函数
-                    const hookedEncodeFunc = function (...args) {
-                        try {
-                            console.log(
-                                `%c[🔒 Protobuf 动态拦截成功] ➔ 结构体/类名: ${protoMessageName}`,
-                                "color: #00ffff; font-weight: bold; font-size: 13px;",
-                            );
+    //                 // ➔ 重写并构建我们自己的代理函数
+    //                 const hookedEncodeFunc = function (...args) {
+    //                     try {
+    //                         console.log(
+    //                             `%c[🔒 Protobuf 动态拦截成功] ➔ 结构体/类名: ${protoMessageName}`,
+    //                             "color: #00ffff; font-weight: bold; font-size: 13px;",
+    //                         );
 
-                            // 【核心目标】：在序列化加密前，提取并打印第一个参数明文
-                            // 根据 Protobuf 官方规范：第一个参数 (args[0]) 是待加密的纯明文 JS 对象 (Message)
-                            // 第二个参数 (args[1]) 是可选的二进制写入流 (Writer)
-                            const rawMessage = args[0];
+    //                         // 【核心目标】：在序列化加密前，提取并打印第一个参数明文
+    //                         // 根据 Protobuf 官方规范：第一个参数 (args[0]) 是待加密的纯明文 JS 对象 (Message)
+    //                         // 第二个参数 (args[1]) 是可选的二进制写入流 (Writer)
+    //                         const rawMessage = args[0];
 
-                            if (rawMessage !== undefined && rawMessage !== null) {
-                                // 检查结构体本身是否自带官方的 toJSON 反序列化方案
-                                if (typeof rawMessage.toJSON === "function") {
-                                    console.log("【加密前明文 JSON】:", rawMessage.toJSON());
-                                } else {
-                                    try {
-                                        // 深度克隆一份，防止混淆的原型链或复杂垃圾属性干扰控制台阅读
-                                        console.log("【加密前明文对象】:", JSON.parse(JSON.stringify(rawMessage)));
-                                    } catch (e) {
-                                        // 针对含有 BigInt 或特殊循环引用的高阶混淆对象使用安全打印
-                                        console.log("【加密前明文(复杂引用对象)】:", rawMessage);
-                                    }
-                                }
-                            } else {
-                                console.log("【提示】: 该 Protobuf 结构发包时未携带任何载荷（第一个参数为空）");
-                            }
+    //                         if (rawMessage !== undefined && rawMessage !== null) {
+    //                             // 检查结构体本身是否自带官方的 toJSON 反序列化方案
+    //                             if (typeof rawMessage.toJSON === "function") {
+    //                                 console.log("【加密前明文 JSON】:", rawMessage.toJSON());
+    //                             } else {
+    //                                 try {
+    //                                     // 深度克隆一份，防止混淆的原型链或复杂垃圾属性干扰控制台阅读
+    //                                     console.log("【加密前明文对象】:", JSON.parse(JSON.stringify(rawMessage)));
+    //                                 } catch (e) {
+    //                                     // 针对含有 BigInt 或特殊循环引用的高阶混淆对象使用安全打印
+    //                                     console.log("【加密前明文(复杂引用对象)】:", rawMessage);
+    //                                 }
+    //                             }
+    //                         } else {
+    //                             console.log("【提示】: 该 Protobuf 结构发包时未携带任何载荷（第一个参数为空）");
+    //                         }
 
-                            // 补漏：如果是嵌套加密，顺便监控一下写入流参数
-                            if (args.length > 1 && args[1]) {
-                                console.log("【附带 Writer/字节写入流状态】:", args[1]);
-                            }
-                        } catch (hookError) {
-                            // 顶级容错：确保即使我们的打印逻辑出错，也绝对不能卡死、中断或影响网页原本的通信和发包
-                            console.error("拦截内部异常(已安全跳过):", hookError);
-                        }
+    //                         // 补漏：如果是嵌套加密，顺便监控一下写入流参数
+    //                         if (args.length > 1 && args[1]) {
+    //                             console.log("【附带 Writer/字节写入流状态】:", args[1]);
+    //                         }
+    //                     } catch (hookError) {
+    //                         // 顶级容错：确保即使我们的打印逻辑出错，也绝对不能卡死、中断或影响网页原本的通信和发包
+    //                         console.error("拦截内部异常(已安全跳过):", hookError);
+    //                     }
 
-                        // 3. 完美放行：将执行权和所有参数原封不动交回给原厂函数，确保游戏网络通信完全正常、不崩溃
-                        return originalEncodeFunc.apply(this, args);
-                    };
+    //                     // 3. 完美放行：将执行权和所有参数原封不动交回给原厂函数，确保游戏网络通信完全正常、不崩溃
+    //                     return originalEncodeFunc.apply(this, args);
+    //                 };
 
-                    // 为新函数打上免死金牌标记，防止其在内部二次触发 set 导致堆栈溢出
-                    originalFunc = originalEncodeFunc;
-                    originalEncodeFunc.__isEncodeHooked__ = true;
-                    this._encode = hookedEncodeFunc;
-                } else {
-                    this._encode = originalEncodeFunc;
-                }
-            },
-            get: function () {
-                return this._encode;
-            },
-            configurable: true, // 允许在必要时删除或重新配置此属性
-        });
+    //                 // 为新函数打上免死金牌标记，防止其在内部二次触发 set 导致堆栈溢出
+    //                 originalFunc = originalEncodeFunc;
+    //                 originalEncodeFunc.__isEncodeHooked__ = true;
+    //                 this._encode = hookedEncodeFunc;
+    //             } else {
+    //                 this._encode = originalEncodeFunc;
+    //             }
+    //         },
+    //         get: function () {
+    //             return this._encode;
+    //         },
+    //         configurable: true, // 允许在必要时删除或重新配置此属性
+    //     });
 
-        console.log("%c=====================================================", "color: #00ffff;");
-        console.log("%c🚀 [Object 原型链 - encode 动态发包监控网已布下] ", "color: #00ffff; font-weight: bold;");
-        console.log("%c接下来只要页面任何位置初始化或调用 Protobuf 加密，控制台将即时刷出明文！", "color: #ffffff;");
-        console.log("%c=====================================================", "color: #00ffff;");
-    })();
+    //     console.log("%c=====================================================", "color: #00ffff;");
+    //     console.log("%c🚀 [Object 原型链 - encode 动态发包监控网已布下] ", "color: #00ffff; font-weight: bold;");
+    //     console.log("%c接下来只要页面任何位置初始化或调用 Protobuf 加密，控制台将即时刷出明文！", "color: #ffffff;");
+    //     console.log("%c=====================================================", "color: #00ffff;");
+    // })();
     ///////////////////////////////////////
     // (function() {
     //   // 保存原始方法
