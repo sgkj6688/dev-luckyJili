@@ -510,7 +510,7 @@ if (location.protocol === "http:") {
             const _0x466a19 = new URLSearchParams(_0x2efb4d.body);
             _0x466a19.append("gameId", _0x276df2("gameId"));
             _0x466a19.append("ssoKey", _0x276df2("ssoKey"));
-            _0x466a19.append("ssoSess", btoa(btoa(btoa(Date.now() + ""))));
+            _0x466a19.append("ssoSess", ""); //btoa(btoa(btoa(Date.now() + "")))
             _0x2efb4d.body = _0x466a19.toString();
             _0x2efb4d.headers.set("Content-Type", "application/x-www-form-urlencoded");
         }
