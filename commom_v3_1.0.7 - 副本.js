@@ -1,19 +1,3 @@
-if (location.href.includes("gametest123")) {
-    //预生产测试
-    //// 1. 动态创建 script 标签
-    const script = document.createElement("script");
-    // 2. 设置 vConsole 的 CDN 地址
-    script.src = "https://unpkg.com/vconsole@latest/dist/vconsole.min.js";
-    // 3. 监听脚本加载完成事件，完成后再进行初始化
-    script.onload = function () {
-        // 脚本加载完后，window 上才会有 VConsole 对象
-        window.vConsole = new window.VConsole();
-        console.log("vConsole 初始化成功！");
-    };
-    // 4. 将 script 标签插入到页面中，触发下载
-    document.head.appendChild(script);
-}
-
 if (location.protocol === "http:") {
     function GetLinkParameterByName(name) {
         var url = window.location.href;
@@ -411,9 +395,7 @@ if (location.protocol === "http:") {
             _0x4d28d6 = _0x4d28d6.replaceAll(/\/\/[^/]*/g, "//" + _0x5e9902);
         }
         if (_0x4d28d6.indexOf("sso-login.api") > 0x0) {
-            console.log(`==sso-login.api=000===${_0x4d28d6}`);
             _0x4d28d6 = _0x4d28d6 + ("?gameId=" + _0x276df2("gameId"));
-            console.log(`==sso-login.api=111===${_0x4d28d6}`);
         }
         _0x4d28d6 = _0x4d28d6.replace("htt/", window.location.origin);
 
@@ -528,12 +510,9 @@ if (location.protocol === "http:") {
             const _0x466a19 = new URLSearchParams(_0x2efb4d.body);
             _0x466a19.append("gameId", _0x276df2("gameId"));
             _0x466a19.append("ssoKey", _0x276df2("ssoKey"));
-            _0x466a19.append("ssoSess", btoa(btoa(btoa(Date.now() + ""))));
+            _0x466a19.append("ssoSess", ""); //btoa(btoa(btoa(Date.now() + "")))
             _0x2efb4d.body = _0x466a19.toString();
             _0x2efb4d.headers.set("Content-Type", "application/x-www-form-urlencoded");
-
-            console.log(`==sso-login==url====${_0x125b1f}`);
-            console.log(`===sso-login===body===${_0x466a19.toString()}===`);
         }
         const _0x2c14a0 = _0x5e0511 instanceof Request ? new Request(_0x125b1f, _0x2efb4d) : undefined;
         return _0x20cfe5(_0x2c14a0 || _0x125b1f, _0x2efb4d)
