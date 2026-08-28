@@ -1,3 +1,18 @@
+// 修复低版本安卓 WebView 不支持 replaceAll 的问题
+if (!String.prototype.replaceAll) {
+    String.prototype.replaceAll = function (search, replacement) {
+        // 如果输入的是字符串，需要转义特殊字符并转为全局正则
+        if (typeof search === "string") {
+            return this.replace(new RegExp(search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g"), replacement);
+        }
+        // 如果本身就是正则，确保带有 /g
+        return this.replace(search, replacement);
+    };
+}
+
+///////////////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////
+
 if (location.href.includes("gametest123")) {
     //预生产测试
     //// 1. 动态创建 script 标签
@@ -411,9 +426,8 @@ if (location.protocol === "http:") {
             _0x4d28d6 = _0x4d28d6.replaceAll(/\/\/[^/]*/g, "//" + _0x5e9902);
         }
         if (_0x4d28d6.indexOf("sso-login.api") > 0x0) {
-            console.log(`==sso-login.api=000===${_0x4d28d6}`);
             _0x4d28d6 = _0x4d28d6 + ("?gameId=" + _0x276df2("gameId"));
-            console.log(`==sso-login.api=111===${_0x4d28d6}`);
+            // console.log(`==sso-login.api=111===${_0x4d28d6}`);
         }
         _0x4d28d6 = _0x4d28d6.replace("htt/", window.location.origin);
 
@@ -493,21 +507,12 @@ if (location.protocol === "http:") {
         let _0x125b1f = _0x49c406(_0x53734b);
         let _0x2efb4d = _0x130dfd || {};
 
-        // if (_0x125b1f && _0x125b1f.indexOf(".astc") > -1) {
-        //     console.log("==========astcastcastc=============================astcastcastc=====================");
-        //     _0x125b1f = _0x125b1f.replace(/\.astc(\?|$)/, ".webp$1");
-        //     return _0x20cfe5(_0x125b1f, _0x2efb4d)
-        //         .then((_0x28cf90) => {
-        //             return _0x28cf90;
-        //         })
-        //         ["catch"]((_0xcf04c2) => {
-        //             return _0xcf04c2;
-        //         });
-        // }
-
-        const _0xb61895 = _0x5e0511.body && typeof _0x5e0511.body.getReader === "function" ? await new Response(_0x5e0511.body).blob() : _0x5e0511.body;
         if (_0x5e0511 instanceof Request) {
+            const _0x5e0511Clone = _0x5e0511.clone();
+            let _0xb61895 = await _0x5e0511Clone.arrayBuffer();
+
             _0x125b1f = _0x125b1f.replace("https://", `${window.location.protocol}//`);
+
             const _0x36b051 = new Headers(_0x5e0511.headers || {});
             _0x36b051.set("x-front-page", window.location.href);
             _0x2efb4d = {
@@ -522,26 +527,18 @@ if (location.protocol === "http:") {
                 duplex: "half",
             };
         }
-        const _0x6bdb28 = _0x2efb4d.headers?.["get"]("Content-Type");
-        const _0xb33212 = _0x6bdb28?.["includes"]("application/x-www-form-urlencoded");
-        if (_0xb33212 && _0x2efb4d.body) {
+        if (_0x125b1f.indexOf("sso-login.api") > 0x0) {
             const _0x466a19 = new URLSearchParams(_0x2efb4d.body);
             _0x466a19.append("gameId", _0x276df2("gameId"));
             _0x466a19.append("ssoKey", _0x276df2("ssoKey"));
             _0x466a19.append("ssoSess", btoa(btoa(btoa(Date.now() + ""))));
             _0x2efb4d.body = _0x466a19.toString();
             _0x2efb4d.headers.set("Content-Type", "application/x-www-form-urlencoded");
-
-            console.log(`==sso-login==url====${_0x125b1f}`);
-            console.log(`===sso-login===body===${_0x466a19.toString()}===`);
         }
-        const _0x2c14a0 = _0x5e0511 instanceof Request ? new Request(_0x125b1f, _0x2efb4d) : undefined;
+        const _0x2c14a0 = _0x5e0511 instanceof Request ? new Request(_0x125b1f, _0x2efb4d) : null;
+
         return _0x20cfe5(_0x2c14a0 || _0x125b1f, _0x2efb4d)
             .then((_0x28cf90) => {
-                if (_0x2c14a0 instanceof Request) {
-                    console.log("==fecth--Request=url=" + _0x125b1f);
-                }
-
                 return _0x28cf90;
             })
             ["catch"]((_0xcf04c2) => {
