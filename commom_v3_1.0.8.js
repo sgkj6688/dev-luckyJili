@@ -1,3 +1,13 @@
+// Keep page context in diagnostic headers without forwarding login credentials.
+const __JILI_FRONT_PAGE__ = (() => {
+    const page = new URL(window.location.href);
+    for (const key of [...page.searchParams.keys()]) {
+        if (/^(ssoKey|token|ssoSess|roundId|roundIndexV2)$/i.test(key)) page.searchParams.delete(key);
+    }
+    page.hash = "";
+    return page.toString();
+})();
+
 if (location.protocol === "http:") {
     function GetLinkParameterByName(name) {
         var url = window.location.href;
@@ -88,7 +98,7 @@ if (location.protocol === "http:") {
         const _0x30b6a9 = this.send;
         const _0x571e06 = this;
         this.send = function (..._0x260524) {
-            _0x571e06.setRequestHeader("x-front-page", window.location.href);
+            _0x571e06.setRequestHeader("x-front-page", __JILI_FRONT_PAGE__);
             return _0x30b6a9.apply(_0x571e06, _0x260524);
         };
         return _0x1a1f11.apply(this, _0x26451a);
@@ -96,9 +106,9 @@ if (location.protocol === "http:") {
     const _0x516fa6 = new Proxy(WebSocket, {
         construct(_0x3cebd7, _0x49c427, _0xde6b4a) {
             if (_0x49c427[0x0].includes("?")) {
-                _0x49c427[0x0] += "&xfrontpage=" + encodeURIComponent(window.location.href);
+                _0x49c427[0x0] += "&xfrontpage=" + encodeURIComponent(__JILI_FRONT_PAGE__);
             } else {
-                _0x49c427[0x0] += "?xfrontpage=" + encodeURIComponent(window.location.href);
+                _0x49c427[0x0] += "?xfrontpage=" + encodeURIComponent(__JILI_FRONT_PAGE__);
             }
             return Reflect.construct(_0x3cebd7, _0x49c427, _0xde6b4a);
         },
@@ -375,23 +385,63 @@ if (location.protocol === "http:") {
         false,
     );
     const _0x216c37 = window.location.pathname.split("/")[0x1].replaceAll("mpt_ori", "mpt").replaceAll("psd_ori", "psd");
-    var _0x3bf842 = _0x5a601e("be").split("").reverse().join("");
+    var _0x3bf842 = (_0x5a601e("be") || "").split("").reverse().join("");
+    const localBackend = /^(127\.0\.0\.1|localhost)(:\d+)?$/.test(_0x3bf842);
+    const localAssetFallback = localBackend && _0x5a601e("isWebp") === "1";
     const _0x270329 = (_0x19fa3c, _0x2c0c21) => {
         if (typeof _0x19fa3c != "string") {
             return _0x19fa3c;
         }
         _0x19fa3c = _0x19fa3c.replace("htt/", "/");
+        // The published WEBAPI template appends .com even when be is a local host:port.
+        // Normalize only that known template before URL parsing (8000.com is not a port).
+        if (localBackend) {
+            const template = /^(https?:\/\/)((?:test-|uat-)?wbwebapi(?:-a)?\.)([^/]+)(?=\/|$)/;
+            const match = _0x19fa3c.match(template);
+            if (match && match[3] === _0x3bf842 + ".com") {
+                _0x19fa3c = match[1] + _0x3bf842 + _0x19fa3c.slice(match[0].length);
+            }
+        }
         if (
             _0x19fa3c.indexOf("wss://") >= 0x0 ||
             _0x19fa3c.indexOf("api.") > 0x0 ||
             _0x19fa3c.indexOf("api_v2.") > 0x0 ||
+            _0x19fa3c.indexOf("sso-login.api") >= 0 ||
             _0x19fa3c.indexOf(_0x216c37 + "/req") != -0x1 ||
             _0x19fa3c.endsWith(_0x216c37 + "/")
         ) {
-            _0x19fa3c = _0x19fa3c.replaceAll(/\/\/[^/]*/g, "//" + _0x3bf842);
+            if (_0x3bf842) {
+                const endpoint = new URL(_0x19fa3c, window.location.origin);
+                endpoint.host = _0x3bf842;
+                _0x19fa3c = endpoint.toString();
+            }
+        }
+        if (localBackend && /^(https?:|wss?:)/.test(_0x19fa3c)) {
+            const target = new URL(_0x19fa3c);
+            // Published clients may hardcode HTTPS for assets on the current HTTP dev server.
+            if (target.host === window.location.host && target.protocol === "https:" && window.location.protocol === "http:") {
+                target.protocol = "http:";
+                _0x19fa3c = target.toString();
+            }
+            if (target.host === _0x3bf842) {
+                target.protocol = target.protocol.startsWith("ws") ? (window.location.protocol === "https:" ? "wss:" : "ws:") : window.location.protocol;
+                // 8088 is the existing local proxy. LAN 3033 serves static assets only.
+                if (
+                    /^(localhost|127\.0\.0\.1)$/.test(window.location.hostname) &&
+                    window.location.port === "8088" &&
+                    target.port === "8000" &&
+                    target.protocol.startsWith("http")
+                ) {
+                    target.host = window.location.host;
+                }
+                _0x19fa3c = target.toString();
+            }
         }
         if (_0x19fa3c.indexOf("sso-login.api") > 0x0) {
-            _0x19fa3c = _0x19fa3c + ("?gameId=" + _0x5a601e("gameId"));
+            const login = new URL(_0x19fa3c, window.location.origin);
+            const gameId = _0x5a601e("gameId");
+            if (gameId) login.searchParams.set("gameId", gameId);
+            _0x19fa3c = login.toString();
         } else if (_0x19fa3c.includes("/web-mobile/assets/versions.json")) {
             const _0x448fd7 = new URL(window.location.href);
             const _0x5b6dba = _0x448fd7.searchParams.get("cav");
@@ -443,10 +493,24 @@ if (location.protocol === "http:") {
         if (_0x154cc6[0x1].indexOf("/assetUpdate") >= 0x0) {
             return;
         }
+
         _0x154cc6[0x1] = _0x154cc6[0x1].replace("https://", `${window.location.protocol}//`);
 
+        if (localAssetFallback) {
+            _0x154cc6[0x1] = _0x154cc6[0x1].replace(/\.astc(?=\?|$)/, ".webp");
+        }
+        const isLocalLogin = localBackend && new URL(_0x154cc6[0x1], window.location.origin).pathname === "/sso-login.api";
         this.send = function (..._0x3eafa2) {
             _0xb1a08a = _0x3eafa2;
+            if (isLocalLogin) {
+                _0x1e0d53.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+                _0x3eafa2 = [
+                    new URLSearchParams({
+                        ssoKey: _0x5a601e("ssoKey") || "",
+                        gameId: _0x5a601e("gameId") || "",
+                    }).toString(),
+                ];
+            }
             return _0x2b736a.apply(_0x1e0d53, _0x3eafa2);
         };
         if (_0x154cc6[0x1].indexOf("setting") == -0x1 && /smallicon\/[a-zA-Z0-9_-]+\.json/.test(_0x154cc6[0x1])) {
@@ -471,58 +535,52 @@ if (location.protocol === "http:") {
         return _0x44ca1d.apply(this, _0x154cc6);
     };
     const _0x4594ab = window.fetch;
-    window.fetch = async (_0x432b84, _0x28d123) => {
-        const _0x22e5b6 = typeof _0x432b84 === "string" ? _0x432b84 : _0x432b84.url;
-        const _0x1604bf = _0x270329(_0x22e5b6);
-        let _0x250030 = _0x28d123 || {};
+    window.fetch = async (input, init) => {
+        const isRequest = input instanceof Request;
+        const originalURL = isRequest ? input.url : String(input);
+        let targetURL = _0x270329(originalURL);
+        if (localAssetFallback) targetURL = targetURL.replace(/\.astc(?=\?|$)/, ".webp");
 
-        // if (_0x1604bf && _0x1604bf.indexOf(".astc") > -1) {
-        //     console.log("==========astcastcastc=============================astcastcastc=====================");
-        //     _0x1604bf = _0x1604bf.replace(/\.astc(\?|$)/, ".webp$1");
-        //     return _0x20cfe5(_0x1604bf, _0x250030)
-        //         .then((_0x28cf90) => {
-        //             return _0x28cf90;
-        //         })
-        //         ["catch"]((_0xcf04c2) => {
-        //             return _0xcf04c2;
-        //         });
-        // }
+        // Clone before reading so a caller-owned Request remains reusable.
+        const effective = isRequest ? new Request(input.clone(), init) : null;
+        const options = effective
+            ? {
+                  method: effective.method,
+                  headers: new Headers(effective.headers),
+                  credentials: effective.credentials,
+                  mode: effective.mode,
+                  cache: effective.cache,
+                  redirect: effective.redirect,
+                  referrer: effective.referrer,
+                  referrerPolicy: effective.referrerPolicy,
+                  integrity: effective.integrity,
+                  keepalive: effective.keepalive,
+                  signal: effective.signal,
+              }
+            : { ...init, headers: new Headers(init && init.headers) };
+        if (effective && effective.body !== null) options.body = await effective.arrayBuffer();
 
-        const _0x5992d8 = _0x432b84.body && typeof _0x432b84.body.getReader === "function" ? await new Response(_0x432b84.body).blob() : _0x432b84.body;
-        if (_0x432b84 instanceof Request) {
-            _0x1604bf = _0x1604bf.replace("https://", `${window.location.protocol}//`);
-            const _0x9103b1 = new Headers(_0x432b84.headers || {});
-            _0x9103b1.set("x-front-page", window.location.href);
-            _0x250030 = {
-                method: _0x432b84.method,
-                headers: _0x9103b1,
-                body: _0x5992d8,
-                credentials: _0x432b84.credentials,
-                mode: _0x432b84.mode,
-                cache: _0x432b84.cache,
-                redirect: _0x432b84.redirect,
-                referrer: _0x432b84.referrer,
-                duplex: "half",
-            };
+        if (isRequest) options.headers.set("x-front-page", __JILI_FRONT_PAGE__);
+        const isLogin = new URL(targetURL, window.location.origin).pathname === "/sso-login.api";
+        if (isLogin && localBackend) {
+            options.method = "POST";
+            options.headers.set("Content-Type", "application/x-www-form-urlencoded");
+            options.body = new URLSearchParams({
+                ssoKey: _0x5a601e("ssoKey") || "",
+                gameId: _0x5a601e("gameId") || "",
+            }).toString();
+        } else if (isLogin && options.body && (options.headers.get("Content-Type") || "").includes("application/x-www-form-urlencoded")) {
+            // Retain the original non-local login form fields, without adding them to other APIs.
+            const body = new URLSearchParams(effective ? new TextDecoder().decode(options.body) : options.body);
+            for (const key of ["gameId", "ssoKey"]) {
+                const value = _0x5a601e(key);
+                if (value !== null) body.set(key, value);
+            }
+            body.set("ssoSess", btoa(btoa(btoa(String(Date.now())))));
+            options.body = body.toString();
         }
-        const _0x43f7ca = _0x250030.headers?.["get"]("Content-Type");
-        const _0x12beeb = _0x43f7ca?.["includes"]("application/x-www-form-urlencoded");
-        if (_0x12beeb && _0x250030.body) {
-            const _0x2290fe = new URLSearchParams(_0x250030.body);
-            _0x2290fe.append("gameId", _0x5a601e("gameId"));
-            _0x2290fe.append("ssoKey", _0x5a601e("ssoKey"));
-            _0x2290fe.append("ssoSess", btoa(btoa(btoa(Date.now() + ""))));
-            _0x250030.body = _0x2290fe.toString();
-            _0x250030.headers.set("Content-Type", "application/x-www-form-urlencoded");
-        }
-        const _0x1bc8c6 = _0x432b84 instanceof Request ? new Request(_0x1604bf, _0x250030) : undefined;
-        return _0x4594ab(_0x1bc8c6 || _0x1604bf, _0x250030)
-            .then((_0x34235e) => {
-                return _0x34235e;
-            })
-            ["catch"]((_0x5540da) => {
-                return _0x5540da;
-            });
+        // Preserve fetch rejection semantics; never return an Error as a Response.
+        return _0x4594ab.call(window, targetURL, options);
     };
     var _0x56efe6 = Object.getOwnPropertyDescriptor(HTMLImageElement.prototype, "src");
     Object.defineProperty(HTMLImageElement.prototype, "src", {
@@ -539,7 +597,7 @@ if (location.protocol === "http:") {
     var _0x2f2c94 = Object.getOwnPropertyDescriptor(HTMLIFrameElement.prototype, "src");
     const _0x359a04 = new URL(window.location.href);
     const _0x218d52 = _0x359a04.searchParams.has("ssoKey");
-    const _0x23c2a4 = _0x359a04.searchParams.get("ssoKey").includes("open");
+    const _0x23c2a4 = (_0x359a04.searchParams.get("ssoKey") || "").includes("open");
     const _0x5bc0bb = (_0x4f25e4) => {
         switch (window.location.protocol) {
             case "http:": {
@@ -563,7 +621,7 @@ if (location.protocol === "http:") {
                 if (_0x218d52 && _0x23c2a4) {
                     _0x4f25e4 = _0x4f25e4.replaceAll(/\/\/[^/]*/g, "//intro-" + window.location.hostname);
                 } else {
-                    _0x4f25e4 = _0x4f25e4.replaceAll(/\/\/[^/]*/g, "//intro_" + window.location.hostname);
+                    _0x4f25e4 = _0x4f25e4.replaceAll(/\/\/[^/]*/g, "//intro-" + window.location.hostname);
                 }
                 break;
             }
@@ -585,10 +643,10 @@ if (location.protocol === "http:") {
             }
             if (_0x17c762.indexOf("/intro?") >= 0x0 || _0x17c762.indexOf("/intro/") >= 0x0) {
                 _0x17c762 = _0x5bc0bb(_0x17c762);
-                _0x17c762 = _0x17c762 + "&xfrontpage=" + encodeURIComponent(window.location.href);
+                _0x17c762 = _0x17c762 + "&xfrontpage=" + encodeURIComponent(__JILI_FRONT_PAGE__);
             } else if (_0x17c762.indexOf("/ingame?") >= 0x0 || _0x17c762.indexOf("language-api.") >= 0x0) {
                 _0x17c762 = _0x30eebc(_0x17c762);
-                _0x17c762 = _0x17c762 + "&xfrontpage=" + encodeURIComponent(window.location.href);
+                _0x17c762 = _0x17c762 + "&xfrontpage=" + encodeURIComponent(__JILI_FRONT_PAGE__);
             }
             var _0x29d448 = _0x2f2c94.set.apply(this, arguments);
             this.setAttribute("data-original-src", _0x17c762);
