@@ -113,33 +113,29 @@ if (location.protocol === "http:") {
         })();
     }
 }
-(() => {
-    const _0xd08fc2 = XMLHttpRequest.prototype.open;
-    XMLHttpRequest.prototype.open = function (..._0x4eb551) {
-        const _0x336e7f = this.send;
-        const _0x2f54ee = this;
-
-        this.send = function (..._0x433ca7) {
-            _0x2f54ee.setRequestHeader("x-front-page", window.location.href);
-
-            return _0x336e7f.apply(_0x2f54ee, _0x433ca7);
-        };
-
-        return _0xd08fc2.apply(this, _0x4eb551);
-    };
-
-    const _0xba4424 = new Proxy(WebSocket, {
-        construct(_0x34501d, _0x5b622e, _0x4a08c5) {
-            if (_0x5b622e[0x0].includes("?")) {
-                _0x5b622e[0x0] += "&xfrontpage=" + encodeURIComponent(window.location.href);
-            } else {
-                _0x5b622e[0x0] += "?xfrontpage=" + encodeURIComponent(window.location.href);
-            }
-            return Reflect.construct(_0x34501d, _0x5b622e, _0x4a08c5);
-        },
-    });
-    window.WebSocket = _0xba4424;
-})();
+// (() => {
+//     const _0xd08fc2 = XMLHttpRequest.prototype.open;
+//     XMLHttpRequest.prototype.open = function (..._0x4eb551) {
+//         const _0x336e7f = this.send;
+//         const _0x2f54ee = this;
+//         this.send = function (..._0x433ca7) {
+//             _0x2f54ee.setRequestHeader("x-front-page", window.location.href);
+//             return _0x336e7f.apply(_0x2f54ee, _0x433ca7);
+//         };
+//         return _0xd08fc2.apply(this, _0x4eb551);
+//     };
+//     const _0xba4424 = new Proxy(WebSocket, {
+//         construct(_0x34501d, _0x5b622e, _0x4a08c5) {
+//             if (_0x5b622e[0x0].includes("?")) {
+//                 _0x5b622e[0x0] += "&xfrontpage=" + encodeURIComponent(window.location.href);
+//             } else {
+//                 _0x5b622e[0x0] += "?xfrontpage=" + encodeURIComponent(window.location.href);
+//             }
+//             return Reflect.construct(_0x34501d, _0x5b622e, _0x4a08c5);
+//         },
+//     });
+//     window.WebSocket = _0xba4424;
+// })();
 (() => {
     let _0x4ee24e = XMLHttpRequest.prototype.open;
     function _0x276df2(_0x17d181) {
@@ -433,17 +429,17 @@ if (location.protocol === "http:") {
 
         return _0x4d28d6;
     };
-    var _0x3e5b57 = new Proxy(WebSocket, {
-        construct: function (_0x2d1ee2, _0xadf19e, _0x4e58dd) {
-            _0xadf19e[0x0] = _0x49c406(_0xadf19e[0x0]);
-            var _0x279aad = Reflect.construct(_0x2d1ee2, _0xadf19e, _0x4e58dd);
-            return _0x279aad;
-        },
-        apply: function (_0x2cc1e7, _0x45b7ff, _0x441386) {
-            return _0x2cc1e7.apply(_0x45b7ff, _0x441386);
-        },
-    });
-    window.WebSocket = _0x3e5b57;
+    // var _0x3e5b57 = new Proxy(WebSocket, {
+    //     construct: function (_0x2d1ee2, _0xadf19e, _0x4e58dd) {
+    //         _0xadf19e[0x0] = _0x49c406(_0xadf19e[0x0]);
+    //         var _0x279aad = Reflect.construct(_0x2d1ee2, _0xadf19e, _0x4e58dd);
+    //         return _0x279aad;
+    //     },
+    //     apply: function (_0x2cc1e7, _0x45b7ff, _0x441386) {
+    //         return _0x2cc1e7.apply(_0x45b7ff, _0x441386);
+    //     },
+    // });
+    // window.WebSocket = _0x3e5b57;
     var _0x57dc70 = [
         "event/trigger",
         "webservice/event/error",
@@ -526,6 +522,8 @@ if (location.protocol === "http:") {
                 referrer: _0x5e0511.referrer,
                 duplex: "half",
             };
+
+            _0x2efb4d.headers.set("Content-Type", "application/x-www-form-urlencoded");
         }
         if (_0x125b1f.indexOf("sso-login.api") > 0x0) {
             const _0x466a19 = new URLSearchParams(_0x2efb4d.body);
@@ -533,7 +531,6 @@ if (location.protocol === "http:") {
             _0x466a19.append("ssoKey", _0x276df2("ssoKey"));
             _0x466a19.append("ssoSess", btoa(btoa(btoa(Date.now() + ""))));
             _0x2efb4d.body = _0x466a19.toString();
-            _0x2efb4d.headers.set("Content-Type", "application/x-www-form-urlencoded");
         }
         const _0x2c14a0 = _0x5e0511 instanceof Request ? new Request(_0x125b1f, _0x2efb4d) : null;
 
@@ -583,9 +580,9 @@ if (location.protocol === "http:") {
             }
             case "https:": {
                 if (_0x1536f8 && _0x3c78dc) {
-                    _0x1eddbb = _0x1eddbb.replaceAll(/\/\/[^/]*/g, "//intro-" + window.location.hostname);
+                    _0x1eddbb = _0x1eddbb.replaceAll(/\/\/[^/]*/g, "//intro." + window.location.hostname);
                 } else {
-                    _0x1eddbb = _0x1eddbb.replaceAll(/\/\/[^/]*/g, "//intro-" + window.location.hostname);
+                    _0x1eddbb = _0x1eddbb.replaceAll(/\/\/[^/]*/g, "//intro." + window.location.hostname);
                 }
                 break;
             }
